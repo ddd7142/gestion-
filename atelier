@@ -1,0 +1,2059 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Gestion des Équipes 2025 - Dashboard Atelier</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.24/jspdf.plugin.autotable.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    :root {
+        --primary-color: #3498db;
+        --primary-color-dark: #2980b9;
+        --secondary-color: #7f8c8d;
+        --accent-color: #5dade2;
+        --text-color: #34495e;
+        --text-light-color: #ffffff;
+        --background-color: #f4f7f6;
+        --card-bg-color: #ffffff;
+        --border-color: #e0e0e0;
+        --shadow-light: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.12);
+        --shadow-medium: 0 3px 6px rgba(0,0,0,0.10), 0 3px 6px rgba(0,0,0,0.18);
+
+        --success-color: #2ecc71;
+        --warning-color: #f39c12;
+        --danger-color: #e74c3c;
+        --blue-color: #3498db; /* Ajout pour le statut "Terminé" des OFs */
+
+
+        --font-family-sans-serif: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        --border-radius-sm: 4px;
+        --border-radius-md: 8px;
+
+        --spacing-xs: 4px;
+        --spacing-sm: 8px;
+        --spacing-md: 16px;
+        --spacing-lg: 24px;
+        --spacing-xl: 32px;
+    }
+
+    html {
+        box-sizing: border-box;
+        font-size: 16px;
+    }
+
+    *, *::before, *::after {
+        box-sizing: inherit;
+    }
+
+    body {
+      font-family: var(--font-family-sans-serif);
+      padding: var(--spacing-lg);
+      background-color: var(--background-color);
+      color: var(--text-color);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 var(--spacing-md);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .header h1 {
+      color: var(--text-color);
+      font-size: 2.2em;
+      font-weight: 600;
+      margin: 0 var(--spacing-md) var(--spacing-sm) 0;
+      text-align: left;
+      flex-shrink: 0;
+    }
+    .header h1 i {
+      margin-right: var(--spacing-sm);
+      color: var(--primary-color);
+    }
+    .header-buttons {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-sm);
+    }
+    .header-buttons button {
+      padding: var(--spacing-sm) var(--spacing-md);
+      font-size: 0.9rem;
+      color: var(--text-light-color);
+      border: none;
+      border-radius: var(--border-radius-sm);
+      cursor: pointer;
+      text-align: center;
+      box-shadow: var(--shadow-light);
+      transition: all 0.2s ease-in-out;
+    }
+    .header-buttons button:hover {
+        box-shadow: var(--shadow-medium);
+        transform: translateY(-1px);
+        filter: brightness(95%);
+    }
+    .header-buttons button i { margin-right: var(--spacing-xs); }
+    #importDataInput { display: none; }
+
+    #adminModeBtn { background-color: var(--secondary-color); }
+    #adminModeBtn.admin-active { background-color: var(--success-color); }
+    #printCombinedReportBtn { background-color: var(--accent-color); }
+    #exportAllDataBtn { background-color: var(--warning-color); color: var(--text-color); }
+    #importAllDataBtn { background-color: var(--primary-color); }
+
+    .nav-dashboard {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-md);
+      justify-content: center;
+      margin-bottom: var(--spacing-lg);
+    }
+    .nav-dashboard-button {
+      background-color: var(--card-bg-color);
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-md);
+      padding: var(--spacing-md);
+      width: calc(33.333% - var(--spacing-md) * (2/3));
+      min-width: 260px;
+      text-align: center;
+      font-size: 1.05rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-light);
+    }
+    .nav-dashboard-button:hover,
+    .nav-dashboard-button.active {
+      background-color: var(--primary-color);
+      color: var(--text-light-color);
+      border-color: var(--primary-color-dark);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-medium);
+    }
+     .nav-dashboard-button.active {
+        box-shadow: var(--shadow-medium), inset 0 0 5px rgba(0,0,0,0.1);
+     }
+    .nav-dashboard-button i {
+      display: block;
+      font-size: 2.2em;
+      margin-bottom: var(--spacing-sm);
+      color: var(--primary-color);
+      transition: color 0.3s ease;
+    }
+    .nav-dashboard-button:hover i,
+    .nav-dashboard-button.active i { color: var(--text-light-color); }
+
+    .section {
+      display: none;
+      margin-top: var(--spacing-lg);
+      background-color: var(--card-bg-color);
+      padding: var(--spacing-lg);
+      border-radius: var(--border-radius-md);
+      box-shadow: var(--shadow-medium);
+    }
+    .section.active { display: block; }
+    .section > h2 {
+      color: var(--primary-color);
+      font-size: 1.6em;
+      margin-top: 0;
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 1px solid #eee;
+    }
+    .section > h2 i { margin-right: var(--spacing-sm); }
+
+    .form-section form {
+        margin-bottom: var(--spacing-lg);
+        background-color: var(--background-color);
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-sm);
+        border: 1px solid var(--border-color);
+    }
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-bottom: var(--spacing-md);
+        gap: var(--spacing-sm);
+    }
+    .form-row label {
+        flex-basis: 180px;
+        flex-shrink: 0;
+        font-weight: 500;
+        padding-right: var(--spacing-sm);
+    }
+    .form-row select,
+    .form-row input[type="date"],
+    .form-row input[type="text"],
+    .form-row input[type="number"] {
+        flex-grow: 1;
+        padding: var(--spacing-sm);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-sm);
+        min-width: 200px;
+    }
+    .form-section button, .week-selector button, .excel-import-area button, .filtre-date-conges button {
+        background-color: var(--primary-color);
+        color: var(--text-light-color);
+        border: none;
+        padding: var(--spacing-sm) var(--spacing-md);
+        cursor: pointer;
+        border-radius: var(--border-radius-sm);
+        transition: background-color 0.3s, box-shadow 0.2s;
+        font-size: 0.95rem;
+        box-shadow: var(--shadow-light);
+        margin-right: var(--spacing-sm);
+    }
+     .form-section button:last-child, .week-selector button:last-child,
+     .excel-import-area button:last-child, .filtre-date-conges button:last-child {
+        margin-right: 0;
+    }
+    .form-section button:hover, .week-selector button:hover,
+    .excel-import-area button:hover, .filtre-date-conges button:hover {
+        background-color: var(--primary-color-dark);
+        box-shadow: var(--shadow-medium);
+    }
+    #printCongeBtn, #print-production-btn, #printMaintenancesBtn, #printPannesBtn { background-color: var(--accent-color); }
+    #printCongesSemaineCouranteBtn, #load-production-btn { background-color: var(--warning-color); color: var(--text-color); }
+    #printCongesSemaineCouranteBtn:hover, #load-production-btn:hover { background-color: #e68a00; }
+    #exportCongesCsvBtn, #save-objectives-btn, #exportMaintenancesCsvBtn, #exportPannesCsvBtn { background-color: var(--success-color); }
+    #exportCongesCsvBtn:hover, #save-objectives-btn:hover, #exportMaintenancesCsvBtn:hover, #exportPannesCsvBtn:hover { background-color: #27ae60; }
+    #btnReinitialiserFiltreCongesDate { background-color: var(--secondary-color); }
+    #btnReinitialiserFiltreCongesDate:hover { background-color: #6c757d; }
+    .form-section .action-buttons { margin-top: var(--spacing-md); }
+
+    .week-selector { text-align: center; margin-bottom: var(--spacing-lg); }
+    .week-selector label { font-weight: 500; margin-right: var(--spacing-xs);}
+    .week-selector select { padding: var(--spacing-sm); border-radius: var(--border-radius-sm); border: 1px solid var(--border-color); margin: 0 var(--spacing-xs); }
+    .week-number { font-size: 1.3em; margin-bottom: var(--spacing-md); color: var(--text-color); text-align: center; font-weight: 600; }
+    #chart-container { width: 100%; max-width: 700px; height: auto; margin: var(--spacing-lg) auto; }
+    .data-table { width: 100%; border-collapse: collapse; margin-top: var(--spacing-md); box-shadow: var(--shadow-light); }
+    .data-table th, .data-table td { border: 1px solid var(--border-color); padding: var(--spacing-sm) var(--spacing-md); text-align: center; }
+    .data-table th { background-color: #f8f9fa; color: var(--text-color); font-weight: 600; vertical-align: middle; }
+    .data-table tr:nth-child(even) td { background-color: #fdfdfd; }
+    .data-table tr:hover td { background-color: #eff7ff; }
+    .data-table .supprimer-btn { background-color: var(--danger-color); color:var(--text-light-color); border:none; padding:var(--spacing-xs) var(--spacing-sm); border-radius:var(--border-radius-sm); cursor:pointer; }
+    .data-table .supprimer-btn:hover { background-color: #c0392b; }
+
+    .summary-box { background-color: #e7f3fe; border-left: 5px solid var(--primary-color); padding: var(--spacing-md); margin-bottom: var(--spacing-lg); font-size: 1.05rem; border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0; }
+    .summary-box i { margin-right: var(--spacing-sm); color: var(--primary-color);}
+    .vider-btn { background-color: var(--danger-color); color: var(--text-light-color); border: none; padding: var(--spacing-sm) var(--spacing-md); cursor: pointer; border-radius: var(--border-radius-sm); transition: background-color 0.3s; margin-top: var(--spacing-lg); font-size: 0.95rem; box-shadow: var(--shadow-light); }
+    .vider-btn:hover { background-color: #c0392b; box-shadow: var(--shadow-medium); }
+    .vider-btn i { margin-right: var(--spacing-xs); }
+
+    #result-cards { display: flex; flex-wrap: wrap; gap: var(--spacing-lg); justify-content: space-around; margin-top: var(--spacing-lg); }
+    .result-card { background-color: var(--card-bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-md); padding: var(--spacing-md); box-shadow: var(--shadow-medium); flex-basis: calc(50% - var(--spacing-lg)); min-width: 280px; display: flex; flex-direction: column; align-items: center; }
+    .result-card h3 { margin-top: 0; margin-bottom: var(--spacing-sm); color: var(--text-color); font-size: 1.2em; text-align: center; }
+    .result-card .data-point { font-size: 1rem; color: var(--secondary-color); margin: var(--spacing-xs) 0; text-align: center; }
+    .result-card .data-point strong { font-size: 1.4em; color: var(--text-color); }
+    .result-card .status { font-size: 1.1em; margin-top: var(--spacing-md); padding: var(--spacing-xs) var(--spacing-md); border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center;}
+    .result-card .status i { margin-right: var(--spacing-sm); font-size: 1.1em; }
+    .result-card .status.atteint { background-color: #d4edda; color: #155724; }
+    .result-card .status.non-atteint { background-color: #f8d7da; color: #721c24; }
+    .result-card .daily-prod { font-size: 0.95rem; color: var(--secondary-color); margin-top: var(--spacing-sm); text-align: center; border-top: 1px dashed #eee; padding-top: var(--spacing-sm); width: 100%;}
+    .result-card .daily-prod strong { font-size: 1.1em; color: var(--text-color); }
+    .status-indicator { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-left: var(--spacing-xs); vertical-align: middle; }
+    .status-indicator.atteint { background-color: var(--success-color); }
+    .status-indicator.non-atteint { background-color: var(--danger-color); }
+    .result-card .objective-input { width: 60px; padding:var(--spacing-xs); margin-left:var(--spacing-xs); border:1px solid var(--border-color); border-radius:var(--border-radius-sm); text-align:center; font-size:0.9em; }
+    .result-card .objective-label { font-size: 0.9rem; color: var(--secondary-color); }
+    .result-card .objectives-editor { margin-top: var(--spacing-sm); padding-top: var(--spacing-sm); border-top: 1px dashed #eee; width: 100%; text-align: center; }
+
+    .today { background-color: #fdf5e6 !important; font-weight: bold; border: 1px solid var(--warning-color) !important; }
+    .holiday-header { background-color: #ffe0b2 !important; color: #e65100 !important; font-weight: bold; }
+    .holiday-header .day-date { display: block; font-size: 0.85em; font-weight: normal; color: #555; line-height: 1.2; }
+    .holiday-header .holiday-name { display: block; font-size: 0.8em; font-weight: normal; line-height: 1.2; margin-top: 2px; }
+    .holiday-cell { background-color: #fff3e0 !important; color: #757575 !important; font-style: italic; font-weight: bold; text-align: center; }
+    .off-day-cell { background-color: #f0f0f0 !important; color: #999 !important; font-style: italic; }
+    .on-leave-planning-cell { background-color: #dcedc8 !important; color: #33691e !important; }
+    .on-leave-planning-cell small { font-size: 0.8em; display: block; }
+    .planning-legend { font-size: 0.9em; color: #555; margin-top: var(--spacing-md); text-align: center; }
+    .planning-legend .legend-item { display: inline-block; margin: 0 var(--spacing-sm); padding: var(--spacing-xs) var(--spacing-sm); border-radius: var(--border-radius-sm); border: 1px solid #ccc; }
+
+    .statut-icon { font-size: 1.1em; padding:var(--spacing-xs); border-radius:50%; color:var(--text-light-color); cursor:pointer; }
+    .statut-fait { background-color: var(--success-color); }
+    .statut-a-faire { background-color: var(--warning-color); }
+    .echeance-depassee td { background-color: #ffcdd2 !important; font-weight: bold; color: #b71c1c !important; }
+    .echeance-proche td { background-color: #fff9c4 !important; color: #f57f17 !important; }
+
+    #analyseCongesSection h3, #gestionSoldesSection h3 { color: var(--primary-color); margin-bottom: var(--spacing-md); font-size: 1.3em;}
+    #analyseCongesSection h4, #gestionSoldesSection h4 { margin-top: 0; margin-bottom: var(--spacing-sm); color: var(--text-color); border-bottom: 1px solid #eee; padding-bottom: var(--spacing-xs); font-size: 1.1em;}
+    #analyseCongesSection ul { list-style-type: none; padding-left: 0; }
+    #analyseCongesSection ul li { padding: var(--spacing-xs) 0; border-bottom: 1px dashed #eee; font-size: 0.95rem;}
+    #analyseCongesSection ul li:last-child { border-bottom: none; }
+
+    .excel-import-area, .filtre-date-conges { margin-top:var(--spacing-md);margin-bottom:var(--spacing-md);padding:var(--spacing-md);background-color:#f9f9f9;border:1px solid #eee;border-radius:var(--border-radius-sm);display:flex;flex-wrap:wrap;align-items:center;gap:var(--spacing-sm);}
+    .excel-import-area label, .filtre-date-conges label { font-weight:500; margin-bottom:0; }
+    .excel-import-area input[type="file"]{ border:1px solid #ccc;padding:var(--spacing-xs);border-radius:var(--border-radius-sm); }
+    .filtre-date-conges input[type="date"]{ width:auto;flex-grow:1;min-width:150px;margin-bottom:0;padding:var(--spacing-sm); }
+    .filtre-date-conges button{ font-size:0.9em; }
+
+    .calendrier-mois-container { margin-top:var(--spacing-lg);margin-bottom:var(--spacing-lg);padding:var(--spacing-md);background-color:#f9f9f9;border:1px solid #eee;border-radius:var(--border-radius-sm); }
+    .calendrier-mois-container h4 { text-align:center;color:var(--text-color);margin-bottom:var(--spacing-sm); font-size: 1.2em; }
+    .calendrier-table {width:100%;max-width:350px;margin:0 auto;border-collapse:collapse;font-size:0.85em;}
+    .calendrier-table th, .calendrier-table td {border:1px solid var(--border-color);padding:var(--spacing-xs);text-align:center;min-width:28px;height:28px;}
+    .calendrier-table th {background-color:var(--primary-color);color:var(--text-light-color);font-weight:normal;}
+    .calendrier-jour-actuel {background-color:#fdf5e6 !important;font-weight:bold;border:2px solid var(--warning-color) !important;}
+    .calendrier-semaine-actuelle {background-color:#e7f3fe !important;}
+    .calendrier-jour-ferie {background-color:#ffe0b2 !important;color:#e65100;font-style:italic;}
+    .calendrier-jour-vide {background-color:#f5f5f5;}
+    .calendrier-jour-weekend {color:#999;}
+
+    .admin-only {}
+    input.admin-only-input:disabled, select.admin-only-select:disabled { background-color: #eeeeee; cursor: not-allowed; }
+
+    @media (max-width: 1024px) {
+        .nav-dashboard-button { width: calc(50% - var(--spacing-md) * (1/2)); }
+    }
+    @media (max-width: 768px) {
+      .header { flex-direction: column; align-items: center; }
+      .header h1 { font-size: 2em; margin: 0 0 var(--spacing-md) 0; text-align: center; }
+      .header-buttons { justify-content: center; width: 100%; }
+      .result-card { flex-basis: 100%; }
+      .form-row { flex-direction: column; align-items: stretch; }
+      .form-row label { flex-basis: auto; width:100%; text-align: left; margin-bottom:var(--spacing-xs); padding-right:0; }
+      .form-row select, .form-row input[type="date"], .form-row input[type="text"], .form-row input[type="number"] { width: 100%; min-width: unset; }
+    }
+    @media (max-width: 480px) {
+      body { padding: var(--spacing-md); }
+      .container { padding: 0 var(--spacing-xs); }
+      .header h1 { font-size: 1.6em; }
+      .header-buttons { flex-direction: column; align-items: stretch; }
+      .header-buttons button { width: 100%; margin-bottom: var(--spacing-sm); }
+      .nav-dashboard-button { width: 100%; min-width:auto; }
+      .excel-import-area, .filtre-date-conges { flex-direction: column; align-items: stretch; }
+      .filtre-date-conges input[type="date"], .excel-import-area input[type="file"], .excel-import-area button { width: 100%; margin-bottom: var(--spacing-sm); }
+      .calendrier-table { font-size: 0.8em;}
+      .calendrier-table td, .calendrier-table th { padding: 3px; min-width: 22px; height: 22px;}
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1><i class="fas fa-industry"></i> ATELIER USINAGE EVOLUTIS</h1>
+    <div class="header-buttons">
+        <button id="adminModeBtn" onclick="toggleAdminMode()"><i class="fas fa-lock"></i> Mode Admin</button>
+        <button id="printCombinedReportBtn" onclick="printCombinedWeeklyReportPDF()"><i class="fas fa-file-pdf"></i> Rapport Sem. PDF</button>
+        <button id="exportAllDataBtn" onclick="exportAllApplicationData()"><i class="fas fa-download"></i> Exporter Données</button>
+        <input type="file" id="importDataInput" accept=".json" onchange="handleImportFileSelection(event)">
+        <button id="importAllDataBtn" onclick="document.getElementById('importDataInput').click()"><i class="fas fa-upload"></i> Importer Données</button>
+    </div>
+  </div>
+
+  <div class="nav-dashboard">
+    <button class="nav-dashboard-button" onclick="showSection('conge')"><i class="fas fa-calendar-check"></i> Congé des collaborateurs</button>
+    <button class="nav-dashboard-button" onclick="showSection('production')"><i class="fas fa-chart-bar"></i> Suivi Production Hebdo.</button>
+    <button class="nav-dashboard-button" onclick="showSection('planning')"><i class="fas fa-calendar-alt"></i> Planning des Équipes</button>
+    <button class="nav-dashboard-button" onclick="showSection('ofs')"><i class="fas fa-tasks"></i> Gestion des OFs</button> <!-- BOUTON AJOUTÉ ICI -->
+    <button class="nav-dashboard-button" onclick="showSection('maintenance')"><i class="fas fa-tools"></i> Maintenance Machines</button>
+    <button class="nav-dashboard-button" onclick="showSection('pannes')"><i class="fas fa-exclamation-triangle"></i> Archives Pannes</button>
+  </div>
+
+  <div id="conge" class="section form-section">
+    <h2><i class="fas fa-calendar-check"></i> Congé des collaborateurs</h2>
+    <div id="calendrierCongeContainer" class="calendrier-mois-container" style="display:none;">
+        <h4>Mois en cours</h4>
+        <div id="calendrierConge"></div>
+    </div>
+    <form id="congeForm">
+      <div class="form-row">
+        <label for="collaborateur">Collaborateur :</label>
+        <select id="collaborateur" name="collaborateur" required>
+          <option value="">-- Choisir un collaborateur --</option>
+          <option value="PHILIPPE">PHILIPPE</option><option value="CHRISTOPHE">CHRISTOPHE</option><option value="PIERRE OLIVIER">PIERRE OLIVIER</option><option value="NICOLAS">NICOLAS</option><option value="HAJER"> HAJER</option><option value=" KEVIN">KEVIN</option><option value="Patrick">Patrick</option><option value="MARCO">MARCO</option><option value="REMY">REMY</option><option value="CELINE">CELINE</option><option value="BENJAMIN">BENJAMIN</option><option value="GAETAN">GAETAN</option><option value="VIRGILE">VIRGILE</option><option value="JEROME">JEROME</option><option value="MAXIME">MAXIME</option><option value="AURELIEN">AURELIEN</option><option value="VINCENT">VINCENT</option><option value="ROMAIN">ROMAIN</option><option value=" DAVID">DAVID</option><option value="STEPHANE">STEPHANE</option>
+        </select>
+      </div>
+      <div class="form-row" style="margin-bottom: var(--spacing-sm);">
+         <label style="visibility:hidden;">&nbsp;</label>
+         <span id="soldeCollaborateurDisplay" style="font-weight: bold; color: var(--text-color); font-size: 0.9rem;"></span>
+      </div>
+      <div class="form-row">
+        <label for="typeConge">Type de congé :</label>
+        <select id="typeConge" name="typeConge" required>
+          <option value="">-- Choisir un type de congé --</option>
+          <option value="Congé">Congé (Décompté)</option><option value="Maladie">Maladie</option><option value="RTT">RTT</option><option value="recup nuit">Recup nuit</option><option value="congé sans solde">congé sans solde</option>
+		  <option value="Formation">Formation</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="dateDebut">Date début :</label>
+        <input type="date" id="dateDebut" name="dateDebut" required>
+      </div>
+      <div class="form-row">
+        <label for="dateFin">Date fin :</label>
+        <input type="date" id="dateFin" name="dateFin" required>
+      </div>
+      <div class="action-buttons">
+        <button type="submit" class="admin-only"><i class="fas fa-save"></i> Enregistrer</button>
+        <button type="button" id="printCongeBtn"><i class="fas fa-print"></i> Tous Congés (PDF)</button>
+        <button type="button" id="printCongesSemaineCouranteBtn"><i class="fas fa-calendar-week"></i> Congés Semaine (PDF)</button>
+        <button type="button" id="exportCongesCsvBtn"><i class="fas fa-file-csv"></i> Tous Congés (CSV)</button>
+      </div>
+    </form>
+    <div class="summary-box" id="congesSummary">
+      <i class="fas fa-info-circle"></i> Chargement des données...
+    </div>
+    <div class="filtre-date-conges">
+        <label for="filtreDateDebutConges"><i class="fas fa-filter"></i> Filtrer du :</label>
+        <input type="date" id="filtreDateDebutConges" name="filtreDateDebutConges">
+        <label for="filtreDateFinConges">au :</label>
+        <input type="date" id="filtreDateFinConges" name="filtreDateFinConges">
+        <button type="button" id="btnFiltrerCongesDate"><i class="fas fa-check"></i> Appliquer</button>
+        <button type="button" id="btnReinitialiserFiltreCongesDate"><i class="fas fa-times"></i> Réinit.</button>
+    </div>
+    <div style="margin-bottom:var(--spacing-sm); margin-top:var(--spacing-md); display:flex; flex-wrap:wrap; gap:var(--spacing-sm); align-items:center;">
+      <label for="rechercheConges" style="flex-shrink:0;"><i class="fas fa-search"></i> Rechercher :</label>
+      <input type="text" id="rechercheConges" placeholder="Collaborateur, type..." style="padding:var(--spacing-sm); border-radius:var(--border-radius-sm); border:1px solid var(--border-color); flex-grow:1; min-width:200px;">
+    </div>
+    <table id="tableConges" class="data-table">
+      <thead><tr><th>Collaborateur</th><th>Type</th><th>Début</th><th>Fin</th><th>Jrs Ouvrés</th><th class="admin-only-header">Action</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <div id="gestionSoldesSection" style="margin-top: var(--spacing-lg); padding-top: var(--spacing-md); border-top: 1px solid #eee;">
+      <h3><i class="fas fa-sliders-h"></i> Gestion Jours Congé Acquis</h3>
+      <p style="font-size:0.9em; color:var(--secondary-color); margin-bottom:var(--spacing-md);">Modifiez les jours acquis initiaux. Le solde est calculé avec les congés "Congé (Décompté)".</p>
+      <table id="tableSoldesAcquis" class="data-table">
+        <thead><tr><th>Collaborateur</th><th class="admin-only-header">Jrs Acquis Init.</th><th>Jrs Congé Pris</th><th>Solde Restant</th><th class="admin-only-header">Action</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div id="analyseCongesSection" style="margin-top: var(--spacing-lg); padding-top: var(--spacing-md); border-top: 1px solid #eee;">
+      <h3><i class="fas fa-chart-pie"></i> Analyse Congés sur Période</h3>
+      <div style="margin-bottom:var(--spacing-md); display:flex; flex-wrap:wrap; gap:var(--spacing-sm); align-items:center;">
+        <label for="analyseDateDebut" style="flex-shrink:0;">Début :</label><input type="date" id="analyseDateDebut" name="analyseDateDebut" style="flex-grow:1; min-width:140px;">
+        <label for="analyseDateFin" style="margin-left:var(--spacing-sm); flex-shrink:0;">Fin :</label><input type="date" id="analyseDateFin" name="analyseDateFin" style="flex-grow:1; min-width:140px;">
+        <button type="button" id="btnAnalyserConges" style="margin-left:var(--spacing-sm);"><i class="fas fa-calculator"></i> Analyser</button>
+      </div>
+      <div id="resultatsAnalyseConges" style="display:flex; flex-wrap:wrap; gap:var(--spacing-md);">
+        <div style="flex:1; min-width:280px; background-color:#f9f9f9; padding:var(--spacing-md); border-radius:var(--border-radius-sm);"><h4>Total Jours par Type :</h4><ul id="listeAnalyseParType"></ul></div>
+        <div style="flex:1; min-width:280px; background-color:#f9f9f9; padding:var(--spacing-md); border-radius:var(--border-radius-sm);"><h4>Total Jours par Collaborateur :</h4><ul id="listeAnalyseParCollaborateur"></ul></div>
+      </div>
+    </div>
+    <button class="vider-btn admin-only" id="viderTout"><i class="fas fa-trash"></i> Vider Tous les Congés</button>
+  </div>
+
+  <div id="production" class="section">
+    <h2><i class="fas fa-chart-bar"></i> Suivi Production Hebdomadaire</h2>
+    <div id="calendrierProductionContainer" class="calendrier-mois-container" style="display:none;"><h4>Mois en cours</h4><div id="calendrierProduction"></div></div>
+    <div id="production-week-number-display" class="week-number"></div>
+    <div class="week-selector"><label for="production-week-select">Afficher la semaine : </label><select id="production-week-select"></select></div>
+    <div class="excel-import-area admin-only">
+        <label for="productionExcelFile"><i class="fas fa-file-excel"></i> Importer Production :</label>
+        <input type="file" id="productionExcelFile" accept=".xlsx, .xls, .csv">
+        <button id="importProductionFromExcelBtn"><i class="fas fa-upload"></i> Charger</button>
+    </div>
+    <h3 style="font-size:1.3em; color: var(--text-color); margin-top: var(--spacing-lg); margin-bottom: var(--spacing-sm);">Saisie résultats journaliers</h3>
+    <table id="production-table" class="data-table"><thead></thead><tbody></tbody></table>
+    <div style="text-align:center; margin-top:var(--spacing-lg); display:flex; flex-wrap:wrap; justify-content:center; gap:var(--spacing-sm);">
+        <button id="save-production-btn" class="admin-only"><i class="fas fa-save"></i> Sauvegarder Production</button>
+        <button id="load-production-btn"><i class="fas fa-sync-alt"></i> Recharger Données</button>
+        <button id="print-production-btn"><i class="fas fa-print"></i> Imprimer PDF Prod.</button>
+        <button id="save-objectives-btn" class="admin-only"><i class="fas fa-bullseye"></i> Sauvegarder Objectifs</button>
+    </div>
+    <div id="result-cards"></div>
+    <div id="chart-container"><canvas id="production-chart"></canvas></div>
+  </div>
+
+  <div id="planning" class="section">
+    <h2><i class="fas fa-calendar-alt"></i> Planning des Équipes (2025)</h2>
+    <div id="calendrierPlanningContainer" class="calendrier-mois-container" style="display:none;"><h4>Mois en cours</h4><div id="calendrierPlanning"></div></div>
+    <div class="week-selector"><label for="week-select">Sélectionner une semaine : </label><select id="week-select" onchange="onWeekChange()"></select><button onclick="downloadExcel()"><i class="fas fa-file-excel"></i> Télécharger Excel</button></div>
+    <div class="planning-legend"><span class="legend-item today" style="background-color: #fdf5e6; border-color:var(--warning-color)">Aujourd'hui</span><span class="legend-item holiday-header">Jour Férié (Entête)</span><span class="legend-item off-day-cell">Repos</span><span class="legend-item holiday-cell">Jour Férié (Cellule)</span><span class="legend-item on-leave-planning-cell">En Congé</span></div>
+    <div class="equipes"><h3 id="planning-week-title" style="font-size:1.3em; color: var(--text-color); text-align:center; margin-bottom: var(--spacing-md);">Planning pour la semaine sélectionnée</h3><div id="equipes-contenu"></div></div>
+  </div>
+
+  <!-- SECTION GESTION DES OFs AJOUTÉE ICI -->
+  <div id="ofs" class="section form-section">
+    <h2><i class="fas fa-tasks"></i> Gestion des Ordres de Fabrication (OF)</h2>
+
+    <form id="ofForm">
+      <div class="form-row">
+        <label for="ofOrderNumber">Numéro d'ordre:</label>
+        <input type="text" id="ofOrderNumber" name="ofOrderNumber" required>
+      </div>
+      <div class="form-row">
+        <label for="ofMachine">Machine:</label>
+        <select id="ofMachine" name="ofMachine" required>
+          <option value="">-- Choisir une machine --</option>
+          <option value="Tour ST15">Tour ST15</option>
+          <option value="Tour ST20">Tour ST20</option>
+          <option value="Tour CMZ">Tour CMZ</option>
+          <option value="Tour FeelER">Tour FeelER</option>
+          <option value="Beta 1 (70)">Beta 1 (70)</option>
+          <option value="Beta 2 (72)">Beta 2 (72)</option>
+          <option value="Beta 3 (109)">Beta 3 (109)</option>
+          <option value="Beta 4 (126)">Beta 4 (126)</option>
+          <option value="Mori 1 (66)">Mori 1 (66)</option>
+          <option value="Mori 2 (84)">Mori 2 (84)</option>
+          <option value="Mori 3 (108)">Mori 3 (108)</option>
+          <option value="Mori 4 (125)">Mori 4 (125)</option>
+          <option value="VF2 50">VF2 50</option>
+          <option value="VF2 52">VF2 52</option>
+          <option value="VF2 100">VF2 100</option>
+          <option value="VF2 11">VF2 11</option>
+          <option value="TM1P">TM1P</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label for="ofProduct">Produit/Référence:</label>
+        <input type="text" id="ofProduct" name="ofProduct" required>
+      </div>
+      <div class="form-row">
+        <label for="ofQuantity">Quantité Prévue:</label>
+        <input type="number" id="ofQuantity" name="ofQuantity" min="1" required>
+      </div>
+      <div class="action-buttons">
+        <button type="submit" class="admin-only"><i class="fas fa-plus-circle"></i> Ajouter l'Ordre</button>
+      </div>
+    </form>
+
+    <div class="summary-box" id="ofsSummary">
+      <i class="fas fa-info-circle"></i> Chargement des OFs...
+    </div>
+
+    <table id="ofsTable" class="data-table">
+      <thead>
+        <tr>
+          <th>Statut</th>
+          <th>Numéro OF</th>
+          <th>Machine</th>
+          <th>Produit</th>
+          <th>Prévue</th>
+          <th>Produite</th>
+          <th>Avancement</th>
+          <th class="admin-only-header">
+              <button id="toggleOFEditModeBtn" class="admin-only" onclick="toggleOFEditMode()" style="font-size:0.8em; padding:4px 8px; background-color: var(--secondary-color);">
+                  <i class="fas fa-edit"></i> Modifier Qté
+              </button>
+          </th>
+          <th class="admin-only-header">Action</th>
+        </tr>
+      </thead>
+      <tbody id="ofsTableBody">
+      </tbody>
+    </table>
+    <button class="vider-btn admin-only" id="viderTousOFs"><i class="fas fa-trash"></i> Vider Tous les OFs</button>
+  </div>
+  <!-- FIN SECTION GESTION DES OFs -->
+
+
+  <div id="maintenance" class="section form-section">
+    <h2><i class="fas fa-tools"></i> Maintenance des Machines (Planifiées)</h2>
+    <form id="maintenanceForm">
+      <div class="form-row"><label for="machine">Machine :</label><select id="machine_maintenance" name="machine" required><option value="">-- Choisir --</option><option value="Tour ST15">Tour ST15</option><option value="Tour ST20">Tour ST20</option><option value="Tour CMZ">Tour CMZ</option><option value="Tour FeelER">Tour FeelER</option><option value="Beta 1 (70)">Beta 1 (70)</option><option value="Beta 2 (72)">Beta 2 (72)</option><option value="Beta 3 (109)">Beta 3 (109)</option><option value="Beta 4 (126)">Beta 4 (126)</option><option value="Mori 1 (66)">Mori 1 (66)</option><option value="Mori 2 (84)">Mori 2 (84)</option><option value="Mori 3 (108)">Mori 3 (108)</option><option value="Mori 4 (125)">Mori 4 (125)</option><option value="VF2 50">VF2 50</option><option value="VF2 52">VF2 52</option><option value="VF2 100">VF2 100</option><option value="VF2 11">VF2 11</option><option value="TM1P">TM1P</option></select></div>
+      <div class="form-row"><label for="typeMaintenance">Type de maintenance :</label><input type="text" id="typeMaintenance" name="typeMaintenance" required></div>
+      <div class="form-row"><label for="dateMaintenance">Date (Planifiée/Faite) :</label><input type="date" id="dateMaintenance" name="dateMaintenance" required></div>
+      <div class="form-row"><label for="prochaineEcheance">Prochaine échéance (si À faire) :</label><input type="date" id="prochaineEcheance" name="prochaineEcheance"></div>
+      <div class="form-row"><label for="statutMaintenance">Statut :</label><select id="statutMaintenance" name="statutMaintenance" required><option value="À faire">Planifier (À faire)</option><option value="Fait">Archiver (Faite)</option></select></div>
+      <div class="action-buttons"><button type="submit" class="admin-only"><i class="fas fa-save"></i> Enregistrer</button><button type="button" id="printMaintenancesBtn"><i class="fas fa-print"></i> Imprimer PDF Planifiées</button><button type="button" id="exportMaintenancesCsvBtn"><i class="fas fa-file-csv"></i> Exporter CSV Planifiées</button></div>
+    </form>
+    <div class="summary-box" id="maintenancesSummary"><i class="fas fa-info-circle"></i> Chargement...</div>
+    <table id="tableMaintenance" class="data-table"><thead><tr><th>Machine</th><th>Type</th><th>Date Planifiée</th><th>Prochaine Échéance</th><th class="admin-only-header">Marquer Fait</th><th class="admin-only-header">Supprimer</th></tr></thead><tbody></tbody></table>
+    <button class="vider-btn admin-only" id="viderMaintenance"><i class="fas fa-trash"></i> Vider Maintenances Planifiées</button>
+  </div>
+
+  <div id="pannes" class="section form-section">
+    <h2><i class="fas fa-exclamation-triangle"></i> Archivage Pannes & Maintenances Faites</h2>
+    <form id="panneForm">
+      <div class="form-row"><label for="machinePanne">Machine :</label><select id="machinePanne" name="machinePanne" required><option value="">-- Choisir --</option><option value="Tour ST15">Tour ST15</option><option value="Tour ST20">Tour ST20</option><option value="Tour CMZ">Tour CMZ</option><option value="Tour Feeler">Tour Feeler</option><option value="Beta 1 (70)">Beta 1 (70)</option><option value="Beta 2 (72)">Beta 2 (72)</option><option value="Beta 3 (109)">Beta 3 (109)</option><option value="Beta 4 (126)">Beta 4 (126)</option><option value="Mori 1 (66)">Mori 1 (66)</option><option value="Mori 2 (84)">Mori 2 (84)</option><option value="Mori 3 (108)">Mori 3 (108)</option><option value="Mori 4 (125)">Mori 4 (125)</option><option value="VF2 50">VF2 50</option><option value="VF2 52">VF2 52</option><option value="VF2 100">VF2 100</option><option value="VF2 11">VF2 11</option><option value="TM1P">TM1P</option></select></div>
+      <div class="form-row"><label for="datePanne">Date panne/intervention :</label><input type="date" id="datePanne" name="datePanne" required></div>
+      <div class="form-row"><label for="descriptionPanne">Description :</label><input type="text" id="descriptionPanne" name="descriptionPanne" required></div>
+      <div class="form-row"><label for="dateResolution">Date résolution/réalisation :</label><input type="date" id="dateResolution" name="dateResolution" required></div>
+      <div class="action-buttons"><button type="submit" class="admin-only"><i class="fas fa-save"></i> Enregistrer Archive</button><button type="button" id="printPannesBtn"><i class="fas fa-print"></i> Imprimer PDF Archives</button><button type="button" id="exportPannesCsvBtn"><i class="fas fa-file-csv"></i> Exporter CSV Archives</button></div>
+    </form>
+    <div class="summary-box" id="pannesSummary"><i class="fas fa-info-circle"></i> Chargement...</div>
+    <table id="tablePannes" class="data-table"><thead><tr><th>Machine</th><th>Date Panne/Inter.</th><th>Description</th><th>Date Résol./Réal.</th><th class="admin-only-header">Action</th></tr></thead><tbody></tbody></table>
+    <button class="vider-btn admin-only" id="viderPannes"><i class="fas fa-trash"></i> Vider Toutes les Archives</button>
+  </div>
+</div>
+
+<script>
+    // --- Mode Administrateur ---
+    let isAdminMode = false;
+    const ADMIN_PASSWORD = "EV0Ldm2024+";
+
+    function checkAdminStatusFromSession() {
+        if (sessionStorage.getItem('isAdminActivated') === 'true') {
+            isAdminMode = true;
+        } else {
+            isAdminMode = false;
+        }
+        updateAdminButtonVisuals();
+        applyAccessControlsToAllSections();
+    }
+
+    function toggleAdminMode() {
+        if (isAdminMode) {
+            isAdminMode = false;
+            sessionStorage.removeItem('isAdminActivated');
+            alert("Mode Administrateur désactivé.");
+        } else {
+            const password = prompt("Entrez le mot de passe administrateur :");
+            if (password === ADMIN_PASSWORD) {
+                isAdminMode = true;
+                sessionStorage.setItem('isAdminActivated', 'true');
+                alert("Mode Administrateur activé.");
+            } else if (password !== null && password !== "") {
+                alert("Mot de passe incorrect.");
+            }
+        }
+        updateAdminButtonVisuals();
+        const activeSection = document.querySelector('.section.active');
+        if (activeSection) {
+            showSection(activeSection.id, true); // Force un rafraîchissement des contrôles pour la section active
+        } else {
+            applyAccessControlsToAllSections(); // Applique à toutes si aucune n'est active
+        }
+    }
+
+    function updateAdminButtonVisuals() {
+        const adminBtn = document.getElementById('adminModeBtn');
+        if (isAdminMode) {
+            adminBtn.innerHTML = '<i class="fas fa-lock-open"></i> Admin Activé';
+            adminBtn.classList.add('admin-active');
+        } else {
+            adminBtn.innerHTML = '<i class="fas fa-lock"></i> Mode Admin';
+            adminBtn.classList.remove('admin-active');
+        }
+    }
+
+    function applyAccessControlsToAllSections() {
+        document.querySelectorAll('.admin-only').forEach(el => {
+            if (el.classList.contains('admin-only-block')) {
+                el.style.display = isAdminMode ? 'block' : 'none';
+            } else if (el.tagName === 'BUTTON' || (el.tagName === 'INPUT' && (el.type === 'submit' || el.type === 'button'))) {
+                el.style.display = isAdminMode ? 'inline-flex' : 'none'; // Utiliser inline-flex pour les boutons avec icônes
+            } else if (el.classList.contains('excel-import-area')) { // Cas spécifique pour la zone d'import Excel
+                el.style.display = isAdminMode ? 'flex' : 'none';
+            }
+             else { // Pour les autres éléments admin-only (typiquement th, td)
+                el.style.display = isAdminMode ? '' : 'none'; // '' pour table-cell, etc.
+            }
+        });
+
+        // Désactivation des inputs/selects en mode non-admin
+        const formElementsToProcess = document.querySelectorAll(
+            '#congeForm select, #congeForm input[type="date"], ' +
+            '#production-table input[type="number"], #result-cards .objective-input, ' +
+            '#maintenanceForm select, #maintenanceForm input, ' +
+            '#panneForm select, #panneForm input, ' +
+            '#ofForm select, #ofForm input' // Ajout pour le formulaire des OFs
+        );
+        formElementsToProcess.forEach(el => {
+            // Exclure les champs de recherche, filtre, analyse et upload de fichier de la désactivation
+            if (!el.id.startsWith('recherche') && !el.id.startsWith('filtre') && !el.id.startsWith('analyse') && el.type !== 'file') {
+                el.disabled = !isAdminMode;
+                if(!isAdminMode) el.classList.add('admin-only-input'); else el.classList.remove('admin-only-input');
+            }
+        });
+        // Appels spécifiques par section
+        applyCongeAccessControls();
+        applyProductionAccessControls();
+        applyMaintenanceAccessControls();
+        applyPannesAccessControls();
+        applyOFsAccessControls(); // Ajout pour la nouvelle section
+    }
+
+    function applyCongeAccessControls() {
+        document.querySelectorAll('#tableConges .supprimer-btn').forEach(btn => btn.style.display = isAdminMode ? 'inline-block' : 'none');
+        document.querySelectorAll('#tableConges th.admin-only-header, #tableConges td.admin-only-cell').forEach(cell => cell.style.display = isAdminMode ? '' : 'none');
+        document.querySelectorAll('#tableSoldesAcquis input[type="number"]').forEach(inp => {inp.disabled = !isAdminMode; if(!isAdminMode) inp.classList.add('admin-only-input'); else inp.classList.remove('admin-only-input');});
+        document.querySelectorAll('#tableSoldesAcquis button').forEach(btn => btn.style.display = isAdminMode ? 'inline-flex' : 'none');
+        document.querySelectorAll('#tableSoldesAcquis th.admin-only-header, #tableSoldesAcquis td.admin-only-cell').forEach(cell => cell.style.display = isAdminMode ? '' : 'none');
+    }
+    function applyProductionAccessControls() {
+        document.querySelectorAll('#production-table input[type="number"]').forEach(inp => {inp.disabled = !isAdminMode; if(!isAdminMode) inp.classList.add('admin-only-input'); else inp.classList.remove('admin-only-input');});
+        document.querySelectorAll('#result-cards .objective-input').forEach(inp => {inp.disabled = !isAdminMode; if(!isAdminMode) inp.classList.add('admin-only-input'); else inp.classList.remove('admin-only-input');});
+        document.querySelectorAll('#result-cards .objectives-editor.admin-only-block').forEach(editor => {
+            editor.style.display = isAdminMode ? 'block' : 'none';
+        });
+    }
+    function applyMaintenanceAccessControls() {
+        document.querySelectorAll('#tableMaintenance .supprimer-btn').forEach(el => el.style.display = isAdminMode ? 'inline-block' : 'none');
+        document.querySelectorAll('#tableMaintenance .statut-icon').forEach(el => el.style.display = isAdminMode ? 'inline-block' : 'none');
+        document.querySelectorAll('#tableMaintenance th.admin-only-header, #tableMaintenance td.admin-only-cell').forEach(cell => cell.style.display = isAdminMode ? '' : 'none');
+         // Correction ID pour la section Maintenance
+        const machineSelectMaintenance = document.getElementById('machine_maintenance');
+        if (machineSelectMaintenance) machineSelectMaintenance.disabled = !isAdminMode;
+    }
+    function applyPannesAccessControls() {
+        document.querySelectorAll('#tablePannes .supprimer-btn').forEach(btn => btn.style.display = isAdminMode ? 'inline-block' : 'none');
+        document.querySelectorAll('#tablePannes th.admin-only-header, #tablePannes td.admin-only-cell').forEach(cell => cell.style.display = isAdminMode ? '' : 'none');
+    }
+    // --- FIN Mode Administrateur ---
+
+    const equipes = {
+      "Équipe Nuit": [" PHILIPPE", " CHRISTOPHE", " PIERRE OLIVIER", " NICOLAS"],
+      "Équipe Matin": ["JEROME", " MAXIME", " AURELIEN", " VINCENT", " ROMAIN"],
+      "Équipe Soir": [" HAJER", " KEVIN", " Patrick", " MARCO", "REMY", " CELINE", " BENJAMIN", " GAETAN", " VIRGILE"],
+      "Équipe Journée": [" DAVID", " STEPHANE"]
+    };
+    let currentPlanningWeek = getISOWeek(new Date());
+    const CURRENT_YEAR = 2025; // Pour le planning. Si besoin d'autres années, à adapter.
+    const joursFeries2025 = {
+        "2025-01-01": "Jour de l'An", "2025-04-21": "Lundi de Pâques", "2025-05-01": "Fête du Travail",
+        "2025-05-08": "Victoire 1945", "2025-05-29": "Ascension", "2025-06-09": "Lundi de Pentecôte",
+        "2025-07-14": "Fête Nationale", "2025-08-15": "Assomption", "2025-11-01": "Toussaint",
+        "2025-11-11": "Armistice 1918", "2025-12-25": "Noël"
+    };
+    // Fonction pour obtenir les jours fériés de l'année en cours (à étendre si besoin)
+    const joursFeriesAnneeActuelle = (annee) => {
+        if (annee === 2025) return joursFeries2025;
+        if (annee === 2024) return { // Exemple pour 2024
+            "2024-01-01": "Jour de l'An", "2024-04-01": "Lundi de Pâques", "2024-05-01": "Fête du Travail",
+            "2024-05-08": "Victoire 1945", "2024-05-09": "Ascension", "2024-05-20": "Lundi de Pentecôte",
+            "2024-07-14": "Fête Nationale", "2024-08-15": "Assomption", "2024-11-01": "Toussaint",
+            "2024-11-11": "Armistice 1918", "2024-12-25": "Noël"
+        };
+        // Ajoutez d'autres années si nécessaire
+        return {}; // Retourne un objet vide si l'année n'est pas gérée
+    };
+
+    // --- Fonctions Utilitaires ---
+    function isHoliday(dateObj) {
+        const year = dateObj.getFullYear();
+        const feriesDeLAnnee = joursFeriesAnneeActuelle(year);
+        const dateString = year + '-' + ('0' + (dateObj.getMonth() + 1)).slice(-2) + '-' + ('0' + dateObj.getDate()).slice(-2);
+        return feriesDeLAnnee[dateString]; // Retourne le nom du jour férié ou undefined
+    }
+    function isEmployeeOnLeave(employeeName, dateObj) {
+        const conges = loadConges(); // S'assurer que loadConges() est définie et accessible
+        const currentDate = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate()); // Normaliser l'heure
+
+        for (const conge of conges) {
+            if (conge.collaborateur === employeeName) {
+                const startDate = new Date(conge.dateDebut); startDate.setHours(0,0,0,0);
+                const endDate = new Date(conge.dateFin); endDate.setHours(0,0,0,0);
+                if (currentDate >= startDate && currentDate <= endDate) {
+                    return conge.typeConge; // Retourne le type de congé
+                }
+            }
+        }
+        return null; // Pas en congé
+    }
+    function getStartOfWeek(year, week) { // Lundi comme premier jour de la semaine ISO
+      const d = new Date(year, 0, 4); // Le 4 janvier est toujours dans la semaine 1
+      const day = d.getDay() || 7; // getDay() = 0 pour Dimanche, on veut 7.
+      d.setDate(d.getDate() + (week - 1) * 7 - (day - 1));
+      return d;
+    }
+    function getEndOfWeek(year, week) { // Dimanche comme dernier jour
+        const start = getStartOfWeek(year, week);
+        const end = new Date(start);
+        end.setDate(start.getDate() + 6);
+        return end;
+    }
+    // Pour le tableau de production qui commence le Dimanche
+    function getStartOfWeekSunday(year, weekNumber) {
+        let mondayOfIsoWeek = getStartOfWeek(year, weekNumber);
+        let sundayForDisplay = new Date(mondayOfIsoWeek);
+        sundayForDisplay.setDate(mondayOfIsoWeek.getDate() - 1); // Dimanche précédent
+        return sundayForDisplay;
+    }
+
+    function getISOWeek(d) { // Calcule le numéro de semaine ISO
+      const date = new Date(d.getTime());
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7); // Positionne au jeudi de cette semaine
+      const week1 = new Date(date.getFullYear(), 0, 4); // Jeudi de la semaine 1
+      // Compte les semaines entre le jeudi de la semaine 1 et le jeudi de la semaine actuelle
+      return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+    }
+    function formatDate(dateString) { // Formate AAAA-MM-JJ en JJ/MM/AAAA
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return ''; // Vérifie si la date est valide
+        return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric'});
+    }
+    function escapeCsvCell(cellData) {
+        if (cellData == null) return ''; // Gère null et undefined
+        let stringData = String(cellData);
+        if (stringData.includes(',') || stringData.includes('"') || stringData.includes('\n') || stringData.includes('\r')) {
+            stringData = '"' + stringData.replace(/"/g, '""') + '"'; // Échappe les guillemets et encadre
+        }
+        return stringData;
+    }
+    function downloadCSV(filename, dataArray) {
+        if (!dataArray || dataArray.length === 0) { alert("Aucune donnée à exporter."); return; }
+        const csvContent = dataArray.map(row => row.map(cell => escapeCsvCell(cell)).join(',')).join('\n');
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM pour Excel
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } else {
+            alert("Votre navigateur ne supporte pas le téléchargement direct de fichiers CSV.");
+        }
+    }
+    // --- FIN Fonctions Utilitaires ---
+
+    // --- Planning des Équipes ---
+    function afficherSemainesPlanning() {
+      const sel = document.getElementById('week-select'); sel.innerHTML = '';
+      for (let w = 1; w <= 52; w++) { const o = document.createElement('option'); o.value = w; o.textContent = 'Semaine ' + w; sel.appendChild(o); }
+      sel.value = currentPlanningWeek;
+      document.getElementById('planning-week-title').textContent = `Planning Semaine ${currentPlanningWeek}, ${CURRENT_YEAR}`;
+    }
+    function onWeekChange() {
+      currentPlanningWeek = parseInt(document.getElementById('week-select').value);
+      document.getElementById('planning-week-title').textContent = `Planning Semaine ${currentPlanningWeek}, ${CURRENT_YEAR}`;
+      renderPlanningForWeek();
+    }
+    function renderPlanningForWeek() {
+        const startOfWeekDate = getStartOfWeek(CURRENT_YEAR, currentPlanningWeek); // Lundi
+        let html = '';
+        const weekDayObjects = []; const weekDayStrings = []; const today = new Date(); today.setHours(0,0,0,0);
+        for (let i = 0; i < 7; i++) { const d = new Date(startOfWeekDate); d.setDate(startOfWeekDate.getDate() + i); weekDayObjects.push(d); weekDayStrings.push(d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }));}
+
+        // Rotation des équipes Matin/Soir
+        const isEvenWeek = currentPlanningWeek % 2 === 0;
+        const equipeMatinEffective = isEvenWeek ? equipes["Équipe Soir"] : equipes["Équipe Matin"];
+        const equipeSoirEffective = isEvenWeek ? equipes["Équipe Matin"] : equipes["Équipe Soir"];
+        const teamsToDisplay = { "Équipe Matin": equipeMatinEffective, "Équipe Soir": equipeSoirEffective, "Équipe Nuit": equipes["Équipe Nuit"], "Équipe Journée": equipes["Équipe Journée"] };
+
+        const workingDays = { // 0=Dim, 1=Lun, ..., 6=Sam
+            "Équipe Matin": [1, 2, 3, 4, 5], // Lun à Ven
+            "Équipe Soir": [1, 2, 3, 4, 5],   // Lun à Ven
+            "Équipe Nuit": [0, 1, 2, 3, 4], // Dim à Jeu (la nuit commence le Dim soir pour finir Lun matin)
+            "Équipe Journée": [1, 2, 3, 4, 5] // Lun à Ven
+        };
+
+        for (const teamName in teamsToDisplay) {
+            html += `<h3>${teamName}</h3><table class="data-table"><thead><tr>`;
+            weekDayObjects.forEach((dateObj, index) => { // dateObj est Lun, Mar, Mer...
+                const dayLabel = weekDayStrings[index]; // Ex: "lun. 01"
+                const holidayName = isHoliday(dateObj);
+                let thClass = ''; let thContent = dayLabel;
+                if (dateObj.getTime() === today.getTime() && getISOWeek(dateObj) === getISOWeek(today) && dateObj.getFullYear() === today.getFullYear()) { thClass += 'today '; }
+                if (holidayName) { thClass += 'holiday-header'; thContent += `<span class="holiday-name">${holidayName}</span>`; }
+                html += `<th class="${thClass.trim()}">${thContent}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            teamsToDisplay[teamName].forEach(member => {
+                html += '<tr>';
+                weekDayObjects.forEach(dateObj => { // dateObj est Lun, Mar, Mer...
+                    const dayOfWeek = dateObj.getDay(); // 0=Dim, 1=Lun, ..., 6=Sam
+                    let cellContent = member; let cellClass = ''; let cellTitle = '';
+                    const typeDeConge = isEmployeeOnLeave(member, dateObj);
+                    const estFerie = isHoliday(dateObj);
+                    const teamSpecificWorkingDays = workingDays[teamName] || [1,2,3,4,5]; // Jours de travail pour cette équipe
+
+                    // D'abord, vérifier si c'est un jour de repos pour l'équipe
+                    if (!teamSpecificWorkingDays.includes(dayOfWeek)) { // Ex: Samedi/Dimanche pour Matin/Soir/Journée, ou Ven/Sam pour Nuit
+                        cellContent = "Repos";
+                        cellClass = "off-day-cell";
+                    }
+
+                    // Si ce n'est pas un jour de repos pour l'équipe, vérifier congé ou férié
+                    if (cellClass === '') { // Si on n'a pas déjà marqué comme "Repos"
+                        if (typeDeConge) {
+                            cellContent = `${member} <br><small><i>(${typeDeConge})</i></small>`;
+                            cellClass = "on-leave-planning-cell";
+                            cellTitle = typeDeConge;
+                        } else if (estFerie) {
+                            cellContent = "JOUR FÉRIÉ";
+                            cellClass = "holiday-cell";
+                        }
+                        // Si ni repos, ni congé, ni férié, alors c'est 'Présent' (implicite, pas de classe spéciale)
+                    }
+                    html += `<td class="${cellClass}" title="${cellTitle}">${cellContent}</td>`;
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+        }
+        document.getElementById('equipes-contenu').innerHTML = html;
+    }
+    function downloadExcel() {
+        const startOfWeekDate = getStartOfWeek(CURRENT_YEAR, currentPlanningWeek); // Lundi
+        const data = [];
+        // Entêtes de colonnes pour Excel (jours de la semaine)
+        const weekDayHeaders = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(startOfWeekDate);
+            d.setDate(startOfWeekDate.getDate() + i);
+            const holidayName = isHoliday(d);
+            let headerText = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
+            if (holidayName) headerText += ` (${holidayName})`;
+            return headerText;
+        });
+        data.push(["Collaborateur", "Équipe", ...weekDayHeaders]); // Ligne d'entête du CSV/Excel
+
+        const isEvenWeek = currentPlanningWeek % 2 === 0;
+        const equipeMatinEffective = isEvenWeek ? equipes["Équipe Soir"] : equipes["Équipe Matin"];
+        const equipeSoirEffective = isEvenWeek ? equipes["Équipe Matin"] : equipes["Équipe Soir"];
+        const teamsToExport = { "Équipe Matin": equipeMatinEffective, "Équipe Soir": equipeSoirEffective, "Équipe Nuit": equipes["Équipe Nuit"], "Équipe Journée": equipes["Équipe Journée"] };
+
+        const workingDays = {
+            "Équipe Matin": [1, 2, 3, 4, 5], "Équipe Soir": [1, 2, 3, 4, 5],
+            "Équipe Nuit": [0, 1, 2, 3, 4], "Équipe Journée": [1, 2, 3, 4, 5]
+        };
+
+        for (const teamName in teamsToExport) {
+            teamsToExport[teamName].forEach(member => {
+                const row = [member, teamName];
+                for (let i = 0; i < 7; i++) { // Pour chaque jour de Lundi à Dimanche
+                    const d = new Date(startOfWeekDate);
+                    d.setDate(startOfWeekDate.getDate() + i);
+                    const dayOfWeek = d.getDay(); // 0 for Sunday, 1 for Monday, etc.
+                    let cellValue = ""; // Par défaut, "Présent" si aucune autre condition n'est remplie
+
+                    const teamSpecificWorkingDays = workingDays[teamName] || [1,2,3,4,5];
+                    const typeDeCongeExcel = isEmployeeOnLeave(member, d);
+                    const estFerieExcel = isHoliday(d);
+
+                    if (!teamSpecificWorkingDays.includes(dayOfWeek)) {
+                        cellValue = "Repos";
+                    }
+
+                    if(cellValue === "") { // Si pas déjà "Repos"
+                        if (typeDeCongeExcel) {
+                            cellValue = typeDeCongeExcel;
+                        } else if (estFerieExcel) {
+                            cellValue = "JOUR FÉRIÉ";
+                        } else {
+                            cellValue = "Présent"; // Si le jour est travaillé et pas de congé/férié
+                        }
+                    }
+                    row.push(cellValue);
+                }
+                data.push(row);
+            });
+        }
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const cols = weekDayHeaders.map(()=>({wch:20})); // Largeur pour les jours
+        cols.unshift({wch:25}); // Largeur pour "Collaborateur"
+        cols.splice(1,0,{wch:15}); // Largeur pour "Équipe"
+        ws['!cols'] = cols;
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, `Planning S${currentPlanningWeek}`);
+        XLSX.writeFile(wb, `planning_equipes_${CURRENT_YEAR}_S${currentPlanningWeek}.xlsx`);
+    }
+    // --- FIN Planning des Équipes ---
+
+    // --- Navigation et Initialisation des Sections ---
+    let sectionsInitialized={}; // Pour suivre les sections déjà initialisées
+    function showSection(sectionId, forceAdminRefresh = false) {
+        document.querySelectorAll('.nav-dashboard-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(section => section.classList.remove('active'));
+
+        const activeSection = document.getElementById(sectionId);
+        if (activeSection) {
+            activeSection.classList.add('active');
+            const activeButton = document.querySelector(`.nav-dashboard-button[onclick="showSection('${sectionId}')"]`);
+            if (activeButton) activeButton.classList.add('active');
+        } else {
+            console.warn(`Section ${sectionId} non trouvée.`);
+            return;
+        }
+
+        // Logique d'initialisation spécifique à chaque section
+        document.getElementById('calendrierCongeContainer').style.display = (sectionId === 'conge') ? 'block' : 'none';
+        document.getElementById('calendrierPlanningContainer').style.display = (sectionId === 'planning') ? 'block' : 'none';
+        document.getElementById('calendrierProductionContainer').style.display = (sectionId === 'production') ? 'block' : 'none';
+
+        if (sectionId === 'planning') {
+            if (!sectionsInitialized[sectionId]) { afficherSemainesPlanning(); sectionsInitialized[sectionId] = true; }
+            onWeekChange(); // Toujours rafraîchir le planning affiché
+            genererCalendrierMoisActuel('calendrierPlanning','calendrierPlanningContainer');
+        } else if (sectionId === 'production') {
+            initProductionSection(); // Gère sa propre initialisation et chargement de données
+            genererCalendrierMoisActuel('calendrierProduction','calendrierProductionContainer');
+        } else if (sectionId === 'conge') {
+            if (!sectionsInitialized[sectionId]) { initCongeEventListeners(); sectionsInitialized[sectionId] = true;}
+            loadJoursAcquis(); // S'assurer que les données sont à jour
+            afficherConges(); // Rafraîchit la table des congés
+            updateSoldeCollaborateurDisplay();
+            genererCalendrierMoisActuel('calendrierConge','calendrierCongeContainer');
+            updateCongesSummary();
+        } else if (sectionId === 'maintenance') {
+            if (!sectionsInitialized[sectionId]) { initMaintenanceEventListeners(); sectionsInitialized[sectionId] = true;}
+            afficherMaintenances();
+            updateMaintenancesSummary();
+        } else if (sectionId === 'pannes') {
+             if (!sectionsInitialized[sectionId]) { initPannesEventListeners(); sectionsInitialized[sectionId] = true;}
+            afficherPannes();
+            updatePannesSummary();
+        } else if (sectionId === 'ofs') { // NOUVELLE SECTION OFs
+            if (!sectionsInitialized[sectionId]) {
+                // initOFsSection() sera appelé plus bas
+                sectionsInitialized[sectionId] = true;
+            }
+            initOFsSection(); // Charge données et attache listeners
+        }
+
+        // Appliquer les contrôles d'accès après l'initialisation de la section
+        if (forceAdminRefresh || isAdminMode || !sectionsInitialized[sectionId]) {
+             applyAccessControlsToAllSections(); // Assure que les contrôles globaux sont appliqués
+        }
+    }
+    // --- FIN Navigation et Initialisation ---
+
+    // --- Suivi Production Hebdomadaire ---
+    const DEFAULT_PRODUCT_DEFINITIONS_PROD = { // Valeurs par défaut
+      "Tiges usinées": {objectifJour: 190, objectifSemaine: 1000, icon: "fa-solid fa-microchip"},
+      "Cotyles": {objectifJour: 140, objectifSemaine: 700, icon: "fa-solid fa-compact-disc"},
+      "Embase usinées": {objectifJour: 12, objectifSemaine: 60, icon: "fa-solid fa-layer-group"},
+      "E27 fraisage": {objectifJour: 23, objectifSemaine: 115, icon: "fa-solid fa-cogs"}
+    };
+    let currentWeekObjectives_prod = {}; // Objectifs pour la semaine en cours, chargés/modifiés
+    let productionData_prod = {}; // Données de production pour la semaine en cours: { "ref": [j1,j2,...j7] }
+    let currentProductionWeekNum = getISOWeek(new Date()); // Semaine ISO actuelle
+    let currentProductionYear = new Date().getFullYear(); // Année actuelle
+    let prodChartInstance = null; // Instance du graphique Chart.js
+
+    function getObjectivesDataKey_prod(year, week) { return `atelierEvolutis_objectivesData_${year}_S${week}`; }
+    function loadObjectivesForWeek_prod(year, week) {
+        const key = getObjectivesDataKey_prod(year, week);
+        const savedObjectives = localStorage.getItem(key);
+        // Commencer avec une copie profonde des défauts
+        currentWeekObjectives_prod = JSON.parse(JSON.stringify(DEFAULT_PRODUCT_DEFINITIONS_PROD));
+        if (savedObjectives) {
+            const parsedSaved = JSON.parse(savedObjectives);
+            for (const ref in currentWeekObjectives_prod) { // Pour chaque produit défini par défaut
+                if (parsedSaved[ref]) { // Si des objectifs sauvegardés existent pour ce produit
+                    currentWeekObjectives_prod[ref].objectifJour = parsedSaved[ref].objectifJour ?? DEFAULT_PRODUCT_DEFINITIONS_PROD[ref].objectifJour;
+                    currentWeekObjectives_prod[ref].objectifSemaine = parsedSaved[ref].objectifSemaine ?? DEFAULT_PRODUCT_DEFINITIONS_PROD[ref].objectifSemaine;
+                }
+            }
+        }
+        // S'assurer que tous les produits par défaut sont présents même s'ils n'étaient pas dans le localStorage
+        for (const defaultRef in DEFAULT_PRODUCT_DEFINITIONS_PROD) {
+            if (!currentWeekObjectives_prod[defaultRef]) {
+                currentWeekObjectives_prod[defaultRef] = JSON.parse(JSON.stringify(DEFAULT_PRODUCT_DEFINITIONS_PROD[defaultRef]));
+            }
+        }
+    }
+    function saveObjectivesForWeek_prod(year, week) {
+        if (!isAdminMode) { alert("Mode Administrateur requis pour sauvegarder les objectifs."); return; }
+        const objectivesToSave = {};
+        // Sauvegarder uniquement les objectifs, pas les icônes
+        for (const ref in currentWeekObjectives_prod) {
+            objectivesToSave[ref] = {
+                objectifJour: currentWeekObjectives_prod[ref].objectifJour,
+                objectifSemaine: currentWeekObjectives_prod[ref].objectifSemaine
+            };
+        }
+        localStorage.setItem(getObjectivesDataKey_prod(year, week), JSON.stringify(objectivesToSave));
+        alert(`Objectifs pour Semaine ${week} (Année ${year}) sauvegardés.`);
+    }
+    function updateObjectiveValue_prod(ref, type, value) { // type est 'objectifJour' ou 'objectifSemaine'
+        if (!isAdminMode) { alert("Mode Administrateur requis."); updateResultCards_prod(); return; }
+        const numValue = Number(value);
+        if (isNaN(numValue) || numValue < 0) {
+            alert("Veuillez entrer un nombre positif pour l'objectif.");
+            updateResultCards_prod(); // Re-render pour remettre la valeur précédente
+            return;
+        }
+        if (currentWeekObjectives_prod[ref]) {
+            currentWeekObjectives_prod[ref][type] = numValue;
+            // Pas besoin de sauvegarder ici, saveObjectivesForWeek_prod s'en chargera
+            updateProductionChart_prod(); // Mettre à jour le graphique
+            updateResultCards_prod();     // Mettre à jour les cartes de résultats
+        }
+    }
+    function getProductionDataKey_prod(year, week) { return `atelierEvolutis_prodData_${year}_S${week}`; }
+    function populateProductionWeekSelector_prod() {
+        const sel = document.getElementById('production-week-select'); sel.innerHTML = '';
+        for (let w = 1; w <= 52; w++) { const o = document.createElement('option'); o.value = w; o.textContent = 'Semaine ' + w; sel.appendChild(o); }
+        sel.value = currentProductionWeekNum; // Définit la semaine actuelle
+    }
+    function updateProductionWeekDisplay_prod() {
+        const display = document.getElementById('production-week-number-display');
+        if (!display) return;
+        const startDate = getStartOfWeekSunday(currentProductionYear, currentProductionWeekNum); // Dimanche
+        const endDate = new Date(startDate); endDate.setDate(startDate.getDate() + 6); // Samedi
+        display.textContent = `Année ${currentProductionYear} - Semaine ${currentProductionWeekNum} (Dim ${startDate.toLocaleDateString('fr-FR')} au Sam ${endDate.toLocaleDateString('fr-FR')})`;
+    }
+    function loadProductionDataForWeek_prod(year, week) {
+        loadObjectivesForWeek_prod(year, week); // Charger/Recharger les objectifs pour cette semaine
+        const key = getProductionDataKey_prod(year, week);
+        const savedData = localStorage.getItem(key);
+        let loadedProdData = savedData ? JSON.parse(savedData) : {};
+
+        productionData_prod = {}; // Réinitialiser les données de production
+        // S'assurer que tous les produits définis dans les objectifs ont une entrée dans productionData_prod
+        for (const ref in currentWeekObjectives_prod) {
+            if (loadedProdData[ref] && loadedProdData[ref].length === 7) { // 7 jours
+                productionData_prod[ref] = loadedProdData[ref];
+            } else {
+                productionData_prod[ref] = Array(7).fill(0); // Initialiser à 0 si pas de données ou format incorrect
+            }
+        }
+        createProductionTable_prod(); // Recréer le tableau avec les données chargées
+        updateResultCards_prod();     // Mettre à jour les cartes de résultats
+        updateProductionChart_prod(); // Mettre à jour le graphique
+        applyProductionAccessControls(); // Appliquer les contrôles d'accès
+    }
+    function saveProductionDataForWeek_prod(year, week) {
+        if (!isAdminMode) { alert("Mode Administrateur requis pour sauvegarder la production."); return; }
+        const dataToSave = {};
+        // S'assurer de sauvegarder les données pour tous les produits définis dans les objectifs
+        for (const ref in currentWeekObjectives_prod) {
+            dataToSave[ref] = productionData_prod[ref] || Array(7).fill(0);
+        }
+        localStorage.setItem(getProductionDataKey_prod(year, week), JSON.stringify(dataToSave));
+        alert(`Production pour Semaine ${week} (Année ${year}) sauvegardée.`);
+    }
+    function handleProductionWeekChange_prod() {
+        currentProductionWeekNum = parseInt(document.getElementById('production-week-select').value);
+        // Note: currentProductionYear n'est pas changé ici, assume la même année. À adapter si besoin de changer d'année.
+        updateProductionWeekDisplay_prod();
+        loadProductionDataForWeek_prod(currentProductionYear, currentProductionWeekNum);
+    }
+    function createProductionTable_prod() {
+        const table = document.getElementById("production-table"); if (!table) return;
+        const tableHead = table.querySelector("thead"); const tableBody = table.querySelector("tbody");
+        tableHead.innerHTML = ''; // Vider l'ancien header
+        const headerRow = tableHead.insertRow(); headerRow.insertCell().textContent = "Référence";
+        const startDate = getStartOfWeekSunday(currentProductionYear, currentProductionWeekNum); // Dimanche
+        const dayFormatter = new Intl.DateTimeFormat('fr-FR', { weekday: 'short' });
+        const dateFormatter = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit' });
+        const today = new Date(); today.setHours(0,0,0,0);
+
+        for (let i = 0; i < 7; i++) { // 7 jours, Dimanche à Samedi
+            const currentDate = new Date(startDate); currentDate.setDate(startDate.getDate() + i); currentDate.setHours(0,0,0,0);
+            const th = document.createElement('th');
+            let dayLabel = dayFormatter.format(currentDate).toUpperCase().replace('.', '');
+            let dateLabel = dateFormatter.format(currentDate);
+            const holidayName = isHoliday(currentDate);
+            let thClass = '';
+            let thContent = `${dayLabel}<br><span class="day-date">${dateLabel}</span>`;
+
+            if (currentDate.getTime() === today.getTime() && parseInt(currentProductionWeekNum) === getISOWeek(today) && parseInt(currentProductionYear) === today.getFullYear()) {
+                thClass += 'today ';
+            }
+            if (holidayName) {
+                thClass += 'holiday-header';
+                thContent += `<span class="holiday-name">${holidayName}</span>`;
+            }
+            th.className = thClass.trim();
+            th.innerHTML = thContent;
+            headerRow.appendChild(th);
+        }
+        tableBody.innerHTML = ''; // Vider l'ancien corps
+        Object.keys(currentWeekObjectives_prod).forEach(ref => { // Utiliser les refs des objectifs pour les lignes
+            const row = tableBody.insertRow();
+            row.insertCell().textContent = ref;
+            const refData = productionData_prod[ref] || Array(7).fill(0); // Données pour cette réf, ou tableau de 0
+            refData.forEach((val,dayIdx)=>{
+                const cell = row.insertCell();
+                const inputEl = document.createElement("input");
+                inputEl.type="number"; inputEl.value=val; inputEl.min = 0;
+                inputEl.style.width = "60px"; inputEl.style.textAlign = "center";
+                inputEl.disabled = !isAdminMode; // Géré par applyProductionAccessControls aussi
+                inputEl.addEventListener('input', e => updateProductionResult_prod(ref, dayIdx, e.target.value));
+                cell.appendChild(inputEl);
+            });
+        });
+    }
+    function updateProductionResult_prod(ref, dayIndex, value) {
+        if (!productionData_prod[ref]) productionData_prod[ref] = Array(7).fill(0);
+        productionData_prod[ref][dayIndex] = Number(value); // Met à jour la valeur dans le tableau en mémoire
+        // Pas de sauvegarde ici, la sauvegarde est manuelle via le bouton
+        updateProductionChart_prod(); // Mettre à jour le graphique
+        updateResultCards_prod();     // Mettre à jour les cartes
+    }
+    function getTotalProduction_prod(ref) { return (productionData_prod[ref] || []).reduce((a, b) => a + b, 0); }
+    function updateProductionChart_prod() {
+        const chartCanvas = document.getElementById('production-chart'); if (!chartCanvas) return;
+        const ctx = chartCanvas.getContext('2d');
+        if (prodChartInstance) prodChartInstance.destroy(); // Détruire l'ancien graphique
+
+        const labels = Object.keys(currentWeekObjectives_prod);
+        const producedData = labels.map(r => getTotalProduction_prod(r));
+        const objectivesData = labels.map(r => currentWeekObjectives_prod[r] ? currentWeekObjectives_prod[r].objectifSemaine : 0);
+
+        prodChartInstance = new Chart(ctx,{
+            type:'bar',
+            data:{
+                labels: labels,
+                datasets:[
+                    {label:'Produit',data:producedData, backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(), borderRadius:4},
+                    {label:'Objectif Semaine',data:objectivesData, backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim(), borderRadius:4}
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true } }, animation: {duration: 0} /* Pas d'animation pour perf */}
+        });
+    }
+    function updateResultCards_prod() {
+        const resultCardsContainer = document.getElementById('result-cards'); if (!resultCardsContainer) return;
+        resultCardsContainer.innerHTML = ''; // Vider les anciennes cartes
+
+        const today = new Date();
+        const actualCurrentIsoWeek = getISOWeek(today);
+        const actualCurrentYear = today.getFullYear();
+        // Vérifier si la semaine/année actuellement affichée est la semaine/année réelle en cours
+        const isCurrentWeekAndYearBeingViewed = (parseInt(currentProductionWeekNum) === actualCurrentIsoWeek && parseInt(currentProductionYear) === actualCurrentYear);
+
+        let currentDayIndexInTable = -1; // 0 pour Dimanche, ..., 6 pour Samedi
+        let currentDayShortName = '';
+        if (isCurrentWeekAndYearBeingViewed) {
+            currentDayIndexInTable = today.getDay(); // Dimanche = 0, Lundi = 1...
+            currentDayShortName = today.toLocaleDateString('fr-FR', { weekday: 'short' }).toUpperCase().replace('.', '');
+        }
+
+        for (const ref in currentWeekObjectives_prod) { // Itérer sur les produits définis dans les objectifs
+            const totalSemaine = getTotalProduction_prod(ref);
+            const objectifSemaine = currentWeekObjectives_prod[ref].objectifSemaine;
+            const objectifJour = currentWeekObjectives_prod[ref].objectifJour;
+            const icon = currentWeekObjectives_prod[ref].icon || 'fa-solid fa-box'; // Icône par défaut
+
+            const semaineAtteint = totalSemaine >= objectifSemaine;
+            const statusSemaineClass = semaineAtteint ? 'atteint' : 'non-atteint';
+            const statusSemaineIcon = semaineAtteint ? 'fa-check-circle' : 'fa-times-circle';
+            const statusSemaineText = semaineAtteint ? 'Objectif Semaine Atteint' : 'Objectif Semaine Non Atteint';
+
+            let productionJourHtml = '';
+            if (isCurrentWeekAndYearBeingViewed && currentDayIndexInTable >= 0 && currentDayIndexInTable <= 6 && productionData_prod[ref]) {
+                const isTodayHoliday = isHoliday(today);
+                 if (isTodayHoliday) {
+                    productionJourHtml = `<div class="data-point daily-prod">Aujourd'hui (${currentDayShortName}): <span style="color:var(--warning-color);font-weight:bold;">JOUR FÉRIÉ</span></div>`;
+                 } else {
+                    const productionAujourdhui = productionData_prod[ref][currentDayIndexInTable] || 0;
+                    const jourAtteint = productionAujourdhui >= objectifJour;
+                    const statusJourClassIndicator = jourAtteint ? 'atteint' : 'non-atteint';
+                    productionJourHtml = `<div class="data-point daily-prod">Aujourd'hui (${currentDayShortName}): <strong>${productionAujourdhui}</strong> / ${objectifJour}<span class="status-indicator ${statusJourClassIndicator}"></span></div>`;
+                 }
+            }
+
+            const objectivesEditorHtml = `
+                <div class="objectives-editor admin-only-block" style="display:${isAdminMode?'block':'none'}">
+                    <div>
+                        <span class="objective-label">Obj. Jour:</span>
+                        <input type="number" class="objective-input admin-only-input" value="${objectifJour}"
+                               onchange="updateObjectiveValue_prod('${ref}','objectifJour',this.value)" ${isAdminMode?'':'disabled'}>
+                    </div>
+                    <div style="margin-top:var(--spacing-xs);">
+                        <span class="objective-label">Obj. Semaine:</span>
+                        <input type="number" class="objective-input admin-only-input" value="${objectifSemaine}"
+                               onchange="updateObjectiveValue_prod('${ref}','objectifSemaine',this.value)" ${isAdminMode?'':'disabled'}>
+                    </div>
+                </div>`;
+
+            const card = document.createElement('div'); card.className='result-card';
+            card.innerHTML=`
+                <h3><i class="${icon}"></i> ${ref}</h3>
+                <div class="data-point">Produit Semaine: <strong>${totalSemaine}</strong></div>
+                <div class="data-point">Objectif Semaine: ${objectifSemaine}</div>
+                <div class="status ${statusSemaineClass}"><i class="fas ${statusSemaineIcon}"></i> ${statusSemaineText}</div>
+                ${productionJourHtml}
+                ${objectivesEditorHtml}`;
+            resultCardsContainer.appendChild(card);
+        }
+    }
+    function printProductionPDF_prod() {
+        const { jsPDF } = window.jspdf; const doc = new jsPDF();
+        doc.text(`Suivi Production - Année ${currentProductionYear}, Semaine ${currentProductionWeekNum}`,10,15);
+        const startDate = getStartOfWeekSunday(currentProductionYear,currentProductionWeekNum);
+        const dayFmt=new Intl.DateTimeFormat('fr-FR',{weekday:'short'});
+        const dateFmt=new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'2-digit'});
+        const pdfDayHdrs=[];
+        for(let i=0;i<7;i++){const curD=new Date(startDate);curD.setDate(startDate.getDate()+i);let dLbl=dayFmt.format(curD).toUpperCase().replace('.','');let dateLbl=dateFmt.format(curD);const holName=isHoliday(curD);let hdrContent=`${dLbl}\n${dateLbl}`;if(holName)hdrContent+=`\n(${holName.substring(0,10)+(holName.length>10?'...':'')})`;pdfDayHdrs.push(hdrContent);}
+
+        const head=[['Référence',...pdfDayHdrs,'Total Sem.','Objectif Sem.']];
+        const body=Object.keys(currentWeekObjectives_prod).map(ref=>[ref,...(productionData_prod[ref]||Array(7).fill(0)),getTotalProduction_prod(ref),currentWeekObjectives_prod[ref].objectifSemaine]);
+        doc.autoTable({head:head,body:body,startY:25,headStyles:{halign:'center',valign:'middle',fontSize:7,fillColor:getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),textColor:getComputedStyle(document.documentElement).getPropertyValue('--text-light-color').trim()},bodyStyles:{halign:'center',valign:'middle',fontSize:8},columnStyles:{0:{halign:'left',cellWidth:'wrap'}}});
+
+        const finalY=doc.lastAutoTable.finalY||30; // Position Y après le tableau
+        const chartCanvas=document.getElementById('production-chart');
+        // S'assurer que le graphique est visible et que Chart.js a eu le temps de le rendre
+        if(chartCanvas && prodChartInstance && chartCanvas.offsetParent!==null && typeof chartCanvas.toDataURL==='function'){
+            try{
+                const imgData=prodChartInstance.toBase64Image('image/png', 1.0); // Obtenir l'image du graphique
+                if(imgData && imgData !=='data:,'){ // Vérifier si l'image n'est pas vide
+                    doc.addImage(imgData,'PNG',10,finalY+10,180,90); // Ajouter l'image au PDF
+                }else{ doc.text("Données du graphique de production indisponibles (image vide).",10,finalY+10); }
+            }catch(e){ console.error("Erreur lors de la génération de l'image du graphique pour PDF:",e); doc.text("Erreur: Graphique de production non inclus.",10,finalY+10); }
+        }else{ doc.text("Graphique de production non visible/généré ou instance non trouvée.",10,finalY+10); }
+        doc.save(`suivi_production_${currentProductionYear}_S${currentProductionWeekNum}.pdf`);
+    }
+    function handleProductionExcelImport(event) {
+        if (!isAdminMode) { alert("Mode Administrateur requis pour importer."); return; }
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e_reader){
+            const data = e_reader.target.result;
+            try{
+                const workbook = XLSX.read(data,{type:'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                const sheetData = XLSX.utils.sheet_to_json(worksheet,{header:1,defval:""}); // header:1 pour array d'arrays
+
+                if(sheetData.length<1){alert("Fichier Excel vide ou mal formaté.");return;}
+
+                // Recharger les définitions d'objectifs pour la semaine actuelle pour s'assurer d'avoir la liste correcte des produits
+                loadObjectivesForWeek_prod(currentProductionYear,currentProductionWeekNum);
+
+                // Créer une copie temporaire des données de production pour éviter de modifier directement productionData_prod
+                // si l'import échoue ou si aucune donnée n'est trouvée.
+                let tempProductionData = JSON.parse(JSON.stringify(productionData_prod));
+                // S'assurer que tempProductionData a une structure pour tous les produits attendus
+                if(Object.keys(tempProductionData).length===0 || !Object.keys(currentWeekObjectives_prod).every(k=>tempProductionData[k])){
+                    tempProductionData={};
+                    for(const ref in currentWeekObjectives_prod) tempProductionData[ref]=Array(7).fill(0);
+                }
+
+                let importSuccessful=false;
+                // Commencer à la ligne 1 si la ligne 0 contient les en-têtes de jours (Dim, Lun, Mar...)
+                // ou à la ligne 0 si les produits sont listés dès la première ligne.
+                // Ici, on suppose que la première colonne (index 0) est le nom du produit.
+                // Les colonnes suivantes (index 1 à 7) sont les productions pour Dimanche à Samedi.
+                for(let i=1; i<sheetData.length; i++){ // Si la ligne 0 est un header, sinon i=0
+                    const row = sheetData[i];
+                    if(!row || row.length === 0 || !row[0]) continue; // Ignorer lignes vides ou sans nom de produit
+
+                    const productName = String(row[0]).trim(); // Nom du produit depuis la première cellule de la ligne
+
+                    // Vérifier si ce produit existe dans nos définitions d'objectifs (et donc dans currentWeekObjectives_prod)
+                    if(currentWeekObjectives_prod[productName]){
+                        if(!tempProductionData[productName]) tempProductionData[productName]=Array(7).fill(0); // S'assurer que le tableau existe
+
+                        // Lire les 7 jours de production
+                        for(let dayIndex=0; dayIndex<7; dayIndex++){
+                            const cellValue = row[dayIndex+1]; // +1 car la première colonne (0) est le nom du produit
+                            const numericValue = parseFloat(cellValue);
+                            tempProductionData[productName][dayIndex] = !isNaN(numericValue) ? numericValue : 0; // Mettre 0 si non numérique
+                        }
+                        importSuccessful=true;
+                    } else {
+                        console.warn(`Produit "${productName}" du fichier Excel non trouvé dans les définitions. Ligne ${i+1} ignorée.`);
+                    }
+                }
+
+                if(importSuccessful){
+                    productionData_prod = tempProductionData; // Appliquer les données importées
+                    createProductionTable_prod();      // Mettre à jour le tableau HTML
+                    updateProductionChart_prod();      // Mettre à jour le graphique
+                    updateResultCards_prod();          // Mettre à jour les cartes de résultat
+                    alert(`Données de production importées depuis Excel pour la Semaine ${currentProductionWeekNum}. N'oubliez pas de SAUVEGARDER si les données sont correctes.`);
+                } else {
+                    alert("Aucune donnée correspondante n'a été importée du fichier Excel. Vérifiez le format du fichier et les noms des produits.");
+                }
+            } catch(err) {
+                console.error("Erreur lors de la lecture du fichier Excel de production:", err);
+                alert("Erreur lors de la lecture du fichier Excel: " + err.message);
+            } finally {
+                event.target.value = null; // Réinitialiser le champ de fichier pour permettre une nouvelle sélection du même fichier
+            }
+        };
+        reader.onerror = function(ex){
+            console.log(ex);
+            alert("Erreur de lecture du fichier.");
+            event.target.value = null; // Réinitialiser
+        };
+        reader.readAsArrayBuffer(file); // ou reader.readAsBinaryString(file); selon la config de XLSX
+    }
+    function initProductionSection() {
+        populateProductionWeekSelector_prod();
+        const prodWeekSelect=document.getElementById('production-week-select');
+        if(prodWeekSelect&&!prodWeekSelect.hasAttribute('data-listener-attached-prodweek')){prodWeekSelect.addEventListener('change',handleProductionWeekChange_prod);prodWeekSelect.setAttribute('data-listener-attached-prodweek','true');}
+
+        currentProductionYear=new Date().getFullYear();currentProductionWeekNum=getISOWeek(new Date());
+        if(prodWeekSelect)prodWeekSelect.value=currentProductionWeekNum; // S'assurer que le select est sur la semaine actuelle
+
+        loadProductionDataForWeek_prod(currentProductionYear,currentProductionWeekNum); // Charge les données pour la semaine actuelle
+        updateProductionWeekDisplay_prod(); // Met à jour l'affichage du numéro de semaine
+
+        const saveProdBtn=document.getElementById('save-production-btn');if(saveProdBtn&&!saveProdBtn.hasAttribute('data-listener-attached-saveprod')){saveProdBtn.addEventListener('click',()=>saveProductionDataForWeek_prod(currentProductionYear,currentProductionWeekNum));saveProdBtn.setAttribute('data-listener-attached-saveprod','true');}
+        const loadProdBtn=document.getElementById('load-production-btn');if(loadProdBtn&&!loadProdBtn.hasAttribute('data-listener-attached-loadprod')){loadProdBtn.addEventListener('click',()=>{if(confirm("Recharger les données écrasera toutes les modifications non enregistrées. Continuer?")){loadProductionDataForWeek_prod(currentProductionYear,currentProductionWeekNum);}});loadProdBtn.setAttribute('data-listener-attached-loadprod','true');}
+        const printProdBtn=document.getElementById('print-production-btn');if(printProdBtn&&!printProdBtn.hasAttribute('data-listener-attached-printprod')){printProdBtn.addEventListener('click',printProductionPDF_prod);printProdBtn.setAttribute('data-listener-attached-printprod','true');}
+        const saveObjBtn=document.getElementById('save-objectives-btn');if(saveObjBtn&&!saveObjBtn.hasAttribute('data-listener-attached-saveobj')){saveObjBtn.addEventListener('click',()=>{saveObjectivesForWeek_prod(currentProductionYear,currentProductionWeekNum);loadProductionDataForWeek_prod(currentProductionYear,currentProductionWeekNum); /*Recharge pour refléter les obj*/});saveObjBtn.setAttribute('data-listener-attached-saveobj','true');}
+
+        const excelImportBtn=document.getElementById('importProductionFromExcelBtn');
+        const excelFileInput=document.getElementById('productionExcelFile');
+        if(excelImportBtn&&excelFileInput&&!excelImportBtn.hasAttribute('data-listener-attached-excelimport')){
+            excelImportBtn.addEventListener('click',()=>{if(excelFileInput.files.length>0){handleProductionExcelImport({target:excelFileInput});}else{alert("Veuillez d'abord sélectionner un fichier Excel.");}});
+            excelImportBtn.setAttribute('data-listener-attached-excelimport','true');
+        }
+        applyProductionAccessControls(); // S'assurer que les contrôles sont bien appliqués
+    }
+    // --- FIN Suivi Production ---
+
+    // --- Gestion Congés ---
+    const DEFAULT_JOURS_ACQUIS = 25; // Jours de congé acquis par défaut par an
+    let joursAcquisGlobalData = {}; // Stocke { collaborateur: joursAcquis }
+
+    function loadJoursAcquis(forceReload = false) {
+        if (!forceReload && Object.keys(joursAcquisGlobalData).length > 0) return joursAcquisGlobalData;
+
+        let storedJoursAcquis = JSON.parse(localStorage.getItem('atelierEvolutis_joursAcquisCollaborateurs') || '{}');
+        const tousLesCollaborateurs = new Set(); // Utiliser un Set pour éviter les doublons
+        // Ajouter les collaborateurs des équipes
+        Object.values(equipes).forEach(equipeArray => equipeArray.forEach(collab => tousLesCollaborateurs.add(collab)));
+        // Ajouter les collaborateurs du select (au cas où ils ne sont pas dans les équipes)
+        document.querySelectorAll('#collaborateur option').forEach(option => { if (option.value) tousLesCollaborateurs.add(option.value); });
+
+        const finalJoursAcquis = {};
+        let structureHasChanged = false; // Pour savoir si on doit resauvegarder
+
+        tousLesCollaborateurs.forEach(collaborateur => {
+            if (storedJoursAcquis[collaborateur] === undefined || isNaN(parseInt(storedJoursAcquis[collaborateur]))) {
+                finalJoursAcquis[collaborateur] = DEFAULT_JOURS_ACQUIS; // Appliquer le défaut
+                structureHasChanged = true;
+            } else {
+                finalJoursAcquis[collaborateur] = parseInt(storedJoursAcquis[collaborateur]);
+            }
+        });
+        // Vérifier s'il y a des collaborateurs dans le storage qui ne sont plus dans les listes (optionnel, pour nettoyage)
+        for (const collabInStorage in storedJoursAcquis) {
+            if (!tousLesCollaborateurs.has(collabInStorage)) {
+                // On pourrait les supprimer ou les garder. Pour l'instant, on les garde si on ne force pas une réinitialisation.
+                 if (!finalJoursAcquis[collabInStorage] && storedJoursAcquis[collabInStorage] !== undefined) { // Pour ne pas écraser si déjà traité
+                     finalJoursAcquis[collabInStorage] = parseInt(storedJoursAcquis[collabInStorage]);
+                 }
+            }
+        }
+        if (structureHasChanged || forceReload) { // Sauvegarder si la structure a changé ou si forcé
+            saveJoursAcquis(finalJoursAcquis);
+        }
+        joursAcquisGlobalData = finalJoursAcquis;
+        return joursAcquisGlobalData;
+    }
+    function saveJoursAcquis(joursAcquisData) { localStorage.setItem('atelierEvolutis_joursAcquisCollaborateurs', JSON.stringify(joursAcquisData)); joursAcquisGlobalData = JSON.parse(JSON.stringify(joursAcquisData)); } // Mise à jour de la variable globale
+    function updateJoursAcquisCollaborateur(collaborateur, jours) {
+        if (!isAdminMode) { alert("Mode Administrateur requis."); return false; }
+        let joursAcquisData = loadJoursAcquis(); // S'assurer d'avoir les dernières données
+        const parsedJours = parseInt(jours, 10);
+        if (isNaN(parsedJours) || parsedJours < 0) { alert("Veuillez entrer un nombre valide et positif pour les jours acquis."); return false; }
+        joursAcquisData[collaborateur] = parsedJours;
+        saveJoursAcquis(joursAcquisData);
+        return true;
+    }
+    function countWorkingDays(startDateStr, endDateStr) { // Compte jours ouvrés (hors WE et fériés)
+        let count = 0;
+        if (!startDateStr || !endDateStr) return 0;
+        let currentDate = new Date(startDateStr); currentDate.setHours(0,0,0,0);
+        const endDate = new Date(endDateStr); endDate.setHours(0,0,0,0);
+        if (currentDate > endDate) return 0; // Période invalide
+        while (currentDate <= endDate) {
+            const dayOfWeek = currentDate.getDay(); // 0 (Dimanche) à 6 (Samedi)
+            if (dayOfWeek !== 0 && dayOfWeek !== 6 && !isHoliday(currentDate)) {
+                count++;
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        return count;
+    }
+    function calculateCongesPris(collaborateurName) { // Calcule les jours de "Congé" (décomptés) pris
+        const conges = loadConges();
+        let totalJoursPris = 0;
+        conges.forEach(c => {
+            if (c.collaborateur === collaborateurName && c.typeConge === "Congé") { // Uniquement type "Congé"
+                totalJoursPris += countWorkingDays(c.dateDebut, c.dateFin);
+            }
+        });
+        return totalJoursPris;
+    }
+    function updateSoldeCollaborateurDisplay() {
+        const collaborateurSelect = document.getElementById('collaborateur');
+        const displaySpan = document.getElementById('soldeCollaborateurDisplay');
+        if(!collaborateurSelect || !displaySpan) return;
+
+        const selectedCollaborateur = collaborateurSelect.value;
+        if (selectedCollaborateur) {
+            const joursAcquisData = loadJoursAcquis();
+            const joursAcquisInitial = joursAcquisData[selectedCollaborateur] ?? DEFAULT_JOURS_ACQUIS;
+            const joursPris = calculateCongesPris(selectedCollaborateur);
+            const soldeRestant = joursAcquisInitial - joursPris;
+            displaySpan.textContent = `Solde: ${soldeRestant} jr(s) (sur ${joursAcquisInitial} acquis).`;
+        } else {
+            displaySpan.textContent = ''; // Pas de collaborateur sélectionné
+        }
+    }
+    function displayGestionSoldesTable() {
+        const tableBody = document.getElementById('tableSoldesAcquis').querySelector('tbody');
+        tableBody.innerHTML = '';
+        const joursAcquisData = loadJoursAcquis();
+        // Créer une liste unique de tous les collaborateurs
+        const collaborateursSet = new Set();
+        Object.values(equipes).forEach(equipe => equipe.forEach(c => collaborateursSet.add(c)));
+        document.querySelectorAll('#collaborateur option').forEach(o => { if (o.value) collaborateursSet.add(o.value); });
+        Object.keys(joursAcquisData).forEach(c => collaborateursSet.add(c)); // Ajouter ceux qui sont juste dans le storage
+
+        Array.from(collaborateursSet).sort().forEach(nomCollaborateur => { // Trier alphabétiquement
+            const joursAcquis = joursAcquisData[nomCollaborateur] ?? DEFAULT_JOURS_ACQUIS;
+            const joursPris = calculateCongesPris(nomCollaborateur);
+            const soldeRestant = joursAcquis - joursPris;
+            const row = tableBody.insertRow();
+            row.insertCell().textContent = nomCollaborateur;
+            const cellJoursAcquis = row.insertCell(); cellJoursAcquis.classList.add('admin-only-cell');
+            const inputJoursAcquis = document.createElement('input');
+            inputJoursAcquis.type='number'; inputJoursAcquis.value=joursAcquis;
+            inputJoursAcquis.style.width='70px'; inputJoursAcquis.min="0";
+            inputJoursAcquis.disabled=!isAdminMode; if(!isAdminMode)inputJoursAcquis.classList.add('admin-only-input');
+            cellJoursAcquis.appendChild(inputJoursAcquis);
+            row.insertCell().textContent = joursPris;
+            row.insertCell().textContent = soldeRestant;
+            const cellAction = row.insertCell(); cellAction.classList.add('admin-only-cell');
+            const saveBtn = document.createElement('button');
+            saveBtn.innerHTML='<i class="fas fa-save"></i> Sauver';
+            saveBtn.style.fontSize="0.8em"; saveBtn.style.padding="4px 8px";
+            saveBtn.disabled=!isAdminMode; saveBtn.style.display=isAdminMode?'inline-flex':'none';
+            saveBtn.onclick = () => {
+                if (updateJoursAcquisCollaborateur(nomCollaborateur, inputJoursAcquis.value)) {
+                    displayGestionSoldesTable(); // Re-render this table
+                    updateSoldeCollaborateurDisplay(); // Update the display near the form
+                    alert(`Jours acquis pour ${nomCollaborateur} mis à jour.`);
+                    if (document.getElementById('planning').classList.contains('active')) renderPlanningForWeek(); // Mettre à jour le planning si visible
+                }
+            };
+            cellAction.appendChild(saveBtn);
+        });
+        document.querySelectorAll('#tableSoldesAcquis th.admin-only-header').forEach(th => th.style.display = isAdminMode ? '' : 'none');
+    }
+    function saveConges(conges) { localStorage.setItem('atelierEvolutis_congesCollaborateurs', JSON.stringify(conges)); }
+    function loadConges() { return JSON.parse(localStorage.getItem('atelierEvolutis_congesCollaborateurs') || '[]'); }
+    function updateCongesSummary() { const conges = loadConges(); document.getElementById('congesSummary').innerHTML = `<i class="fas fa-info-circle"></i> ${conges.length} congé(s) enregistré(s).`;}
+    function afficherConges(filtreDateDebutStr = null, filtreDateFinStr = null) {
+        const tableau = document.getElementById('tableConges').querySelector('tbody');
+        tableau.innerHTML = ''; let conges = loadConges();
+
+        // Filtrage par dates si fourni
+        if (filtreDateDebutStr && filtreDateFinStr) {
+            const filtreDateDebut = new Date(filtreDateDebutStr); filtreDateDebut.setHours(0,0,0,0);
+            const filtreDateFin = new Date(filtreDateFinStr); filtreDateFin.setHours(23,59,59,999);
+            conges = conges.filter(c => {
+                const congeDateDebut=new Date(c.dateDebut);congeDateDebut.setHours(0,0,0,0);
+                const congeDateFin=new Date(c.dateFin);congeDateFin.setHours(23,59,59,999);
+                // Le congé chevauche la période de filtre
+                return congeDateDebut <= filtreDateFin && congeDateFin >= filtreDateDebut;
+            });
+        }
+        // Trier par date de début (plus récent en premier), puis par collaborateur
+        conges.sort((a,b) => new Date(b.dateDebut) - new Date(a.dateDebut) || a.collaborateur.localeCompare(b.collaborateur));
+
+        if (conges.length === 0) {
+            const l = tableau.insertRow(); const c = l.insertCell(); c.colSpan = 6; /* Ajuster si nb de colonnes change */
+            c.textContent = "Aucun congé trouvé pour les critères sélectionnés."; c.style.textAlign = "center"; c.style.fontStyle = "italic";
+        } else {
+            conges.forEach((conge) => {
+                const ligne=tableau.insertRow();
+                ligne.insertCell().textContent=conge.collaborateur;
+                ligne.insertCell().textContent=conge.typeConge;
+                ligne.insertCell().textContent=formatDate(conge.dateDebut);
+                ligne.insertCell().textContent=formatDate(conge.dateFin);
+                // Afficher les jours ouvrés décomptés uniquement pour le type "Congé"
+                const joursOuvresDecomptes=(conge.typeConge==="Congé")?countWorkingDays(conge.dateDebut, conge.dateFin):'-';
+                ligne.insertCell().textContent=joursOuvresDecomptes;
+
+                const actionCell=ligne.insertCell();actionCell.classList.add('admin-only-cell'); // Pour le bouton supprimer
+                const deleteButton=document.createElement('button');deleteButton.className='supprimer-btn';deleteButton.innerHTML='<i class="fas fa-trash"></i>';deleteButton.title="Supprimer ce congé";deleteButton.style.display=isAdminMode?'inline-block':'none';
+                deleteButton.onclick=()=>supprimerCongesByDetails(conge.collaborateur,conge.dateDebut,conge.dateFin,conge.typeConge);
+                actionCell.appendChild(deleteButton);
+            });
+        }
+        document.querySelectorAll('#tableConges th.admin-only-header').forEach(th => th.style.display=isAdminMode?'':'none');
+        updateCongesSummary(); displayGestionSoldesTable(); updateSoldeCollaborateurDisplay();
+        filtrerTableConges(); // Appliquer le filtre de recherche textuelle
+        applyCongeAccessControls(); // S'assurer que les contrôles sont bien appliqués
+    }
+    function supprimerCongesByDetails(collaborateur, dateDebut, dateFin, typeConge) {
+        if (!isAdminMode) { alert("Mode Administrateur requis."); return; }
+        if (!confirm(`Supprimer le congé de type "${typeConge}" pour ${collaborateur} du ${formatDate(dateDebut)} au ${formatDate(dateFin)}?`)) return;
+        // Créer un identifiant unique pour le congé à supprimer pour éviter les erreurs si plusieurs congés identiques existent (peu probable mais possible)
+        const congeIdentifier = `${collaborateur}-${dateDebut}-${dateFin}-${typeConge}`;
+        const updatedConges = loadConges().filter(c => `${c.collaborateur}-${c.dateDebut}-${c.dateFin}-${c.typeConge}` !== congeIdentifier);
+        saveConges(updatedConges);
+        // Rafraîchir l'affichage avec les filtres de date actuels
+        const filtreDDVal=document.getElementById('filtreDateDebutConges').value;
+        const filtreDFVal=document.getElementById('filtreDateFinConges').value;
+        afficherConges(filtreDDVal||null,filtreDFVal||null);
+        if(document.getElementById('planning').classList.contains('active'))renderPlanningForWeek(); // Rafraîchir le planning
+        updateSoldeCollaborateurDisplay(); // Mettre à jour le solde affiché
+    }
+    function filtrerTableConges() {
+        const input = document.getElementById('rechercheConges');
+        const filter = input.value.toUpperCase();
+        const table = document.getElementById('tableConges');
+        const tr = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        for (let i = 0; i < tr.length; i++) {
+            let displayRow = false;
+            const tds = tr[i].getElementsByTagName('td');
+            // Parcourir les 5 premières colonnes (Collaborateur, Type, Début, Fin, Jrs Ouvrés)
+            for (let j = 0; j < 5; j++) {
+                if(tds[j]){const txtValue=tds[j].textContent||tds[j].innerText;if(txtValue.toUpperCase().indexOf(filter)>-1){displayRow=true;break;}}
+            }
+            tr[i].style.display = displayRow ? "" : "none";
+        }
+    }
+    function analyzeAndDisplayLeaves() {
+        const periodeDebutInput = document.getElementById('analyseDateDebut').value;
+        const periodeFinInput = document.getElementById('analyseDateFin').value;
+        if (!periodeDebutInput || !periodeFinInput) { alert("Veuillez sélectionner une période de début et de fin pour l'analyse."); return; }
+        const periodeStartDate = new Date(periodeDebutInput); periodeStartDate.setHours(0,0,0,0);
+        const periodeEndDate = new Date(periodeFinInput); periodeEndDate.setHours(23,59,59,999);
+        if (periodeStartDate > periodeEndDate) { alert("La date de début de la période d'analyse ne peut pas être après la date de fin."); return; }
+
+        const allLeaves = loadConges(); const totalsByType={}; const totalsByCollaborateur={};
+        allLeaves.forEach(conge => {
+            const congeStartDate = new Date(conge.dateDebut); congeStartDate.setHours(0,0,0,0);
+            const congeEndDate = new Date(conge.dateFin); congeEndDate.setHours(23,59,59,999);
+            // Vérifier si le congé chevauche la période d'analyse
+            if (congeStartDate <= periodeEndDate && congeEndDate >= periodeStartDate) {
+                // Calculer les dates effectives du congé dans la période d'analyse
+                const effectiveCongeStart = new Date(Math.max(congeStartDate,periodeStartDate));
+                const effectiveCongeEnd = new Date(Math.min(congeEndDate,periodeEndDate));
+                if(effectiveCongeStart<=effectiveCongeEnd){ // S'assurer que la plage effective est valide
+                    const daysInPeriod = countWorkingDays(effectiveCongeStart.toISOString().split('T')[0], effectiveCongeEnd.toISOString().split('T')[0]);
+                    if (daysInPeriod > 0) { // Uniquement si des jours ouvrés sont concernés
+                        if (!totalsByType[conge.typeConge]) totalsByType[conge.typeConge] = 0;
+                        totalsByType[conge.typeConge] += daysInPeriod;
+                        if (!totalsByCollaborateur[conge.collaborateur]) totalsByCollaborateur[conge.collaborateur] = 0;
+                        totalsByCollaborateur[conge.collaborateur] += daysInPeriod;
+                    }
+                }
+            }
+        });
+        const listTypeUl = document.getElementById('listeAnalyseParType'); listTypeUl.innerHTML='';
+        if(Object.keys(totalsByType).length===0)listTypeUl.innerHTML='<li>Aucune absence trouvée pour cette période.</li>';else{Object.keys(totalsByType).sort().forEach(type=>{const li=document.createElement('li');li.textContent=`${type}: ${totalsByType[type]} jour(s) ouvré(s)`;listTypeUl.appendChild(li);});}
+        const listCollabUl = document.getElementById('listeAnalyseParCollaborateur'); listCollabUl.innerHTML='';
+        if(Object.keys(totalsByCollaborateur).length===0)listCollabUl.innerHTML='<li>Aucune absence trouvée pour cette période.</li>';else{Object.keys(totalsByCollaborateur).sort().forEach(collab=>{const li=document.createElement('li');li.textContent=`${collab}: ${totalsByCollaborateur[collab]} jour(s) ouvré(s)`;listCollabUl.appendChild(li);});}
+    }
+    function viderTousLesConges() { if (!isAdminMode) { alert("Mode Administrateur requis."); return; } if (confirm("Êtes-vous sûr de vouloir vider TOUS les congés enregistrés ? Les jours acquis des collaborateurs ne seront PAS réinitialisés.")) { saveConges([]); const fDD=document.getElementById('filtreDateDebutConges').value;const fDF=document.getElementById('filtreDateFinConges').value;afficherConges(fDD||null,fDF||null);if(document.getElementById('planning').classList.contains('active'))renderPlanningForWeek();}}
+    function printCongesPDF() { const {jsPDF}=window.jspdf;const doc=new jsPDF();doc.text('Liste de Tous les Congés Enregistrés',10,15);const conges=loadConges();if(conges.length===0){doc.text("Aucun congé enregistré.",10,25);doc.save('tous_conges.pdf');return;}const rows=conges.map(c=>[c.collaborateur,c.typeConge,formatDate(c.dateDebut),formatDate(c.dateFin),(c.typeConge==="Congé")?countWorkingDays(c.dateDebut,c.dateFin):'-']);doc.autoTable({head:[['Collaborateur','Type','Début','Fin','Jrs Ouvrés Décomptés']],body:rows,startY:25,headStyles:{fillColor:getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),textColor:getComputedStyle(document.documentElement).getPropertyValue('--text-light-color').trim()},alternateRowStyles:{fillColor:'#f5f5f5'}});doc.save('tous_conges_enregistres.pdf');}
+    function exportCongesCSV() { const conges=loadConges();if(conges.length===0){alert("Aucun congé à exporter.");return;}const headers=["Collaborateur","Type","Date Début (AAAA-MM-JJ)","Date Fin (AAAA-MM-JJ)","Jours Ouvrés Décomptés"];const data=conges.map(c=>[c.collaborateur,c.typeConge,c.dateDebut,c.dateFin,(c.typeConge==="Congé")?countWorkingDays(c.dateDebut,c.dateFin):'']);downloadCSV("export_tous_conges.csv",[headers,...data]);}
+    function printCongesSemaineCourantePDF() { const today=new Date();const year=today.getFullYear();const weekNum=getISOWeek(today);const startOfWeekDate=getStartOfWeek(year,weekNum);startOfWeekDate.setHours(0,0,0,0);const endOfWeekDate=getEndOfWeek(year,weekNum);endOfWeekDate.setHours(23,59,59,999);const allConges=loadConges();const congesCetteSemaine=allConges.filter(c=>{const congeStartDate=new Date(c.dateDebut);congeStartDate.setHours(0,0,0,0);const congeEndDate=new Date(c.dateFin);congeEndDate.setHours(23,59,59,999);return congeStartDate<=endOfWeekDate&&congeEndDate>=startOfWeekDate;});const {jsPDF}=window.jspdf;const doc=new jsPDF();doc.text(`Congés pour la Semaine ${weekNum} (${year})`,10,15);doc.setFontSize(10);doc.text(`(Période du ${formatDate(startOfWeekDate)} au ${formatDate(endOfWeekDate)})`,10,20);if(congesCetteSemaine.length===0)doc.text("Aucun congé enregistré pour cette semaine.",10,30);else{const rows=congesCetteSemaine.map(c=>{let joursOuvresDansLaSemaine=0;if(c.typeConge==="Congé"){let currentDateEffective=new Date(Math.max(new Date(c.dateDebut),startOfWeekDate));let endDateEffective=new Date(Math.min(new Date(c.dateFin),endOfWeekDate));while(currentDateEffective<=endDateEffective){const dayOfWeek=currentDateEffective.getDay();if(dayOfWeek!==0&&dayOfWeek!==6&&!isHoliday(currentDateEffective))joursOuvresDansLaSemaine++;currentDateEffective.setDate(currentDateEffective.getDate()+1);}}return[c.collaborateur,c.typeConge,formatDate(c.dateDebut),formatDate(c.dateFin),(c.typeConge==="Congé")?joursOuvresDansLaSemaine:'-'];});doc.autoTable({head:[['Collaborateur','Type','Début Congé','Fin Congé','Jrs Ouvrés (Semaine)']],body:rows,startY:25,headStyles:{fillColor:getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),textColor:getComputedStyle(document.documentElement).getPropertyValue('--text-light-color').trim()},alternateRowStyles:{fillColor:'#f5f5f5'}});}doc.save(`conges_semaine_${weekNum}_${year}.pdf`);}
+    function genererCalendrierMoisActuel(targetDivId,containerDivId){const calendrierDiv=document.getElementById(targetDivId);const calendrierContainer=document.getElementById(containerDivId);if(!calendrierDiv||!calendrierContainer)return;calendrierDiv.innerHTML='';const today=new Date();const currentMonth=today.getMonth();const currentYear=today.getFullYear();const currentDayOfMonth=today.getDate();const currentISOWeek=getISOWeek(today);const moisNoms=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];const joursNomsSemaine=["Lu","Ma","Me","Je","Ve","Sa","Di"];const titreCalendrier=calendrierContainer.querySelector('h4');if(titreCalendrier)titreCalendrier.textContent=`${moisNoms[currentMonth]} ${currentYear} (Sem. ISO:${currentISOWeek})`;const table=document.createElement('table');table.className='calendrier-table';const head=table.createTHead();const headerRow=head.insertRow();joursNomsSemaine.forEach(jourNom=>{const th=document.createElement('th');th.textContent=jourNom;headerRow.appendChild(th);});const body=table.createTBody();const firstDayOfMonth=new Date(currentYear,currentMonth,1);const daysInMonth=new Date(currentYear,currentMonth+1,0).getDate();let startingDayOfWeek=firstDayOfMonth.getDay();startingDayOfWeek=(startingDayOfWeek===0)?6:startingDayOfWeek-1;let dateNumber=1;for(let i=0;i<6;i++){const row=body.insertRow();let rowHasNonEmptyCell=false;for(let j=0;j<7;j++){const cell=row.insertCell();if(i===0&&j<startingDayOfWeek)cell.classList.add('calendrier-jour-vide');else if(dateNumber>daysInMonth)cell.classList.add('calendrier-jour-vide');else{cell.textContent=dateNumber;const currentDateObject=new Date(currentYear,currentMonth,dateNumber);if(dateNumber===currentDayOfMonth&&currentMonth===today.getMonth()&&currentYear===today.getFullYear())cell.classList.add('calendrier-jour-actuel');if(getISOWeek(currentDateObject)===currentISOWeek&&currentYear===today.getFullYear()&&!cell.classList.contains('calendrier-jour-actuel'))cell.classList.add('calendrier-semaine-actuelle');if(isHoliday(currentDateObject)){cell.classList.add('calendrier-jour-ferie');cell.title=isHoliday(currentDateObject);}if(j===5||j===6)cell.classList.add('calendrier-jour-weekend');dateNumber++;rowHasNonEmptyCell=true;}}if(!rowHasNonEmptyCell&&dateNumber>daysInMonth)row.style.display='none';}calendrierDiv.appendChild(table);}
+    function initCongeEventListeners() {
+        if (initCongeEventListeners.initialized) return;
+        document.getElementById('collaborateur').addEventListener('change', updateSoldeCollaborateurDisplay);
+        document.getElementById('rechercheConges').addEventListener('input', filtrerTableConges);
+        document.getElementById('congeForm').addEventListener('submit', function(event) {
+          event.preventDefault(); if (!isAdminMode) { alert("Mode Administrateur requis pour enregistrer un congé."); return; }
+          const { collaborateur, typeConge, dateDebut, dateFin } = this.elements;
+          if (new Date(dateDebut.value) > new Date(dateFin.value)) { alert("La date de début du congé ne peut pas être après la date de fin."); return; }
+          if (typeConge.value === "Congé") { // Vérifications spécifiques pour type "Congé"
+            const joursDemandes = countWorkingDays(dateDebut.value, dateFin.value);
+            let isSingleNonWorkingDaySelected = false;
+            if(dateDebut.value===dateFin.value){const d=new Date(dateDebut.value);const day=d.getDay();if(day===0||day===6||isHoliday(d))isSingleNonWorkingDaySelected=true;}
+            if(!isSingleNonWorkingDaySelected && joursDemandes <= 0){alert("Pour un congé de type 'Congé (Décompté)', la période sélectionnée doit inclure au moins un jour ouvré.");return;}
+            const joursAcquisData = loadJoursAcquis(); const joursAcquisInitial = joursAcquisData[collaborateur.value]??DEFAULT_JOURS_ACQUIS;
+            const joursPrisAvant = calculateCongesPris(collaborateur.value); const soldeRestant = joursAcquisInitial - joursPrisAvant;
+            if (joursDemandes > soldeRestant) { if (!confirm(`Le solde de ${collaborateur.value} (${soldeRestant} jr(s)) est insuffisant pour les ${joursDemandes} jour(s) demandés. Voulez-vous continuer quand même ?`)) return;}
+          }
+          const conges = loadConges(); conges.push({ collaborateur: collaborateur.value, typeConge: typeConge.value, dateDebut: dateDebut.value, dateFin: dateFin.value });
+          saveConges(conges); const fDDV = document.getElementById('filtreDateDebutConges').value; const fDFV = document.getElementById('filtreDateFinConges').value;
+          afficherConges(fDDV||null,fDFV||null); if (document.getElementById('planning').classList.contains('active')) renderPlanningForWeek(); this.reset(); updateSoldeCollaborateurDisplay();
+        });
+        document.getElementById('viderTout').addEventListener('click', viderTousLesConges);
+        document.getElementById('printCongeBtn').addEventListener('click', printCongesPDF);
+        document.getElementById('printCongesSemaineCouranteBtn').addEventListener('click', printCongesSemaineCourantePDF);
+        document.getElementById('exportCongesCsvBtn').addEventListener('click', exportCongesCSV);
+        document.getElementById('btnAnalyserConges').addEventListener('click', analyzeAndDisplayLeaves);
+        document.getElementById('btnFiltrerCongesDate').addEventListener('click', ()=>{const dD=document.getElementById('filtreDateDebutConges').value;const dF=document.getElementById('filtreDateFinConges').value;if(dD&&dF){if(new Date(dD)>new Date(dF)){alert("Filtre par date: La date de début ne peut pas être après la date de fin.");return;}afficherConges(dD,dF);}else if(dD||dF){alert("Pour filtrer par dates, veuillez fournir une date de début ET une date de fin.");}else{afficherConges(); /*Pas de dates, affiche tout*/}});
+        document.getElementById('btnReinitialiserFiltreCongesDate').addEventListener('click', ()=>{document.getElementById('filtreDateDebutConges').value='';document.getElementById('filtreDateFinConges').value='';afficherConges();});
+        initCongeEventListeners.initialized = true;
+    }
+    // --- FIN Gestion Congés ---
+
+    // --- Gestion Maintenance ---
+    function saveMaintenances(maintenances){localStorage.setItem('atelierEvolutis_maintenancesMachines',JSON.stringify(maintenances));}
+    function loadMaintenances(){return JSON.parse(localStorage.getItem('atelierEvolutis_maintenancesMachines')||'[]');}
+    function updateMaintenancesSummary(){const maintenancesPlanifiees=loadMaintenances().filter(m=>m.statut==="À faire"||!m.statut);document.getElementById('maintenancesSummary').innerHTML=`<i class="fas fa-info-circle"></i> ${maintenancesPlanifiees.length} maintenance(s) planifiée(s) (statut "À faire").`;}
+    function afficherMaintenances(){const tableBody=document.getElementById('tableMaintenance').querySelector('tbody');tableBody.innerHTML='';const maintenances=loadMaintenances();const today=new Date();today.setHours(0,0,0,0);const maintenancesAFaire=maintenances.filter(m=>m.statut==="À faire"||!m.statut).sort((a,b)=>{const dateEcheanceA=a.prochaineEcheance?new Date(a.prochaineEcheance):new Date(a.dateMaintenance);const dateEcheanceB=b.prochaineEcheance?new Date(b.prochaineEcheance):new Date(b.dateMaintenance);if(dateEcheanceA.getTime()===dateEcheanceB.getTime())return new Date(a.dateMaintenance)-new Date(b.dateMaintenance);return dateEcheanceA-dateEcheanceB;});if(maintenancesAFaire.length===0){const l=tableBody.insertRow();const c=l.insertCell();c.colSpan=6;c.textContent="Aucune maintenance planifiée.";c.style.textAlign="center";c.style.fontStyle="italic";}else{maintenancesAFaire.forEach(maint=>{const ligne=tableBody.insertRow();ligne.insertCell().textContent=maint.machine;ligne.insertCell().textContent=maint.typeMaintenance;ligne.insertCell().textContent=formatDate(maint.dateMaintenance);const cellEcheance=ligne.insertCell();cellEcheance.textContent=formatDate(maint.prochaineEcheance);if(maint.prochaineEcheance){const dateEcheance=new Date(maint.prochaineEcheance);dateEcheance.setHours(0,0,0,0);const diffJours=Math.ceil((dateEcheance.getTime()-today.getTime())/(1000*60*60*24));if(diffJours<0)ligne.classList.add('echeance-depassee');else if(diffJours<=7)ligne.classList.add('echeance-proche');}const statutCell=ligne.insertCell();statutCell.classList.add('admin-only-cell');const statutIcon=document.createElement('i');statutIcon.classList.add('fas','statut-icon','fa-hourglass-half','statut-a-faire');statutIcon.title="Marquer comme Fait et Archiver";statutIcon.style.display=isAdminMode?'inline-block':'none';statutIcon.onclick=()=>toggleMaintenanceStatutByDetails(maint.machine,maint.typeMaintenance,maint.dateMaintenance,maint.prochaineEcheance);statutCell.appendChild(statutIcon);statutCell.style.textAlign='center';const actionCellDel=ligne.insertCell();actionCellDel.classList.add('admin-only-cell');const deleteBtn=document.createElement('button');deleteBtn.className='supprimer-btn';deleteBtn.innerHTML='<i class="fas fa-trash"></i>';deleteBtn.title="Supprimer cette maintenance planifiée";deleteBtn.style.display=isAdminMode?'inline-block':'none';deleteBtn.onclick=()=>supprimerMaintenanceByDetails(maint.machine,maint.typeMaintenance,maint.dateMaintenance,maint.prochaineEcheance);actionCellDel.appendChild(deleteBtn);});}document.querySelectorAll('#tableMaintenance th.admin-only-header').forEach(th=>th.style.display=isAdminMode?'':'none');updateMaintenancesSummary();applyMaintenanceAccessControls();}
+    function toggleMaintenanceStatutByDetails(machine,typeMaintenance,dateMaintenance,prochaineEcheance){if(!isAdminMode){alert("Mode Administrateur requis.");return;}const maintenances=loadMaintenances();const maintenanceIndex=maintenances.findIndex(m=>m.machine===machine&&m.typeMaintenance===typeMaintenance&&m.dateMaintenance===dateMaintenance&&(m.prochaineEcheance===prochaineEcheance||(!m.prochaineEcheance&&!prochaineEcheance))&&(m.statut==="À faire"||!m.statut));if(maintenanceIndex===-1){alert("Erreur: Maintenance planifiée non trouvée.");return;}const maintenanceToArchive=maintenances[maintenanceIndex];const dateArchivagePanne=prompt("Maintenance faite le (AAAA-MM-JJ, laisser vide pour utiliser la date planifiée):",maintenanceToArchive.dateMaintenance);if(dateArchivagePanne===null)return;let dateValideArchivage=maintenanceToArchive.dateMaintenance;if(dateArchivagePanne!==""&&/^\d{4}-\d{2}-\d{2}$/.test(dateArchivagePanne)&&!isNaN(new Date(dateArchivagePanne).getTime()))dateValideArchivage=dateArchivagePanne;else if(dateArchivagePanne!=="")alert("Format de date invalide. La date planifiée sera utilisée pour l'archivage.");if(!confirm(`Archiver la maintenance "${maintenanceToArchive.typeMaintenance}" pour ${maintenanceToArchive.machine} (planifiée le ${formatDate(maintenanceToArchive.dateMaintenance)}) comme faite le ${formatDate(dateValideArchivage)}?`))return;const pannes=loadPannes();pannes.push({machine:maintenanceToArchive.machine,datePanne:dateValideArchivage,descriptionPanne:"Maintenance Préventive Réalisée: "+maintenanceToArchive.typeMaintenance+(maintenanceToArchive.dateMaintenance!==dateValideArchivage?` (Initialement planifiée le ${formatDate(maintenanceToArchive.dateMaintenance)})`:""),dateResolution:dateValideArchivage});savePannes(pannes);maintenances.splice(maintenanceIndex,1);saveMaintenances(maintenances);afficherMaintenances();if(document.getElementById('pannes').classList.contains('active'))afficherPannes();updateMaintenancesSummary();updatePannesSummary();}
+    function supprimerMaintenanceByDetails(machine,typeMaintenance,dateMaintenance,prochaineEcheance){if(!isAdminMode){alert("Mode Administrateur requis.");return;}if(!confirm(`Supprimer la maintenance planifiée: "${typeMaintenance}" pour ${machine} du ${formatDate(dateMaintenance)}?`))return;let maintenances=loadMaintenances();maintenances=maintenances.filter(m=>!(m.machine===machine&&m.typeMaintenance===typeMaintenance&&m.dateMaintenance===dateMaintenance&&(m.prochaineEcheance===prochaineEcheance||(!m.prochaineEcheance&&!prochaineEcheance))));saveMaintenances(maintenances);afficherMaintenances();}
+    function viderToutesLesMaintenances(){if(!isAdminMode){alert("Mode Administrateur requis.");return;}if(confirm("Voulez-vous vraiment vider toutes les maintenances planifiées (celles avec statut 'À faire')?")){const maintenancesExistantes=loadMaintenances();const maintenancesNonPlanifiees=maintenancesExistantes.filter(m=>m.statut&&m.statut!=="À faire");saveMaintenances(maintenancesNonPlanifiees);afficherMaintenances();}}
+    function printMaintenancesPDF(){const{jsPDF}=window.jspdf;const doc=new jsPDF();doc.text('Liste des Maintenances Planifiées (Statut "À faire")',10,15);const maintenancesPlanifiees=loadMaintenances().filter(m=>m.statut==="À faire"||!m.statut);if(maintenancesPlanifiees.length===0)doc.text("Aucune maintenance planifiée à afficher.",10,25);else{const tableRows=maintenancesPlanifiees.map(m=>[m.machine,m.typeMaintenance,formatDate(m.dateMaintenance),formatDate(m.prochaineEcheance)]);doc.autoTable({head:[['Machine','Type de Maintenance','Date Planifiée','Prochaine Échéance']],body:tableRows,startY:25,headStyles:{fillColor:getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),textColor:getComputedStyle(document.documentElement).getPropertyValue('--text-light-color').trim()},alternateRowStyles:{fillColor:'#f5f5f5'}});}doc.save('maintenances_planifiees.pdf');}
+    function exportMaintenancesCSV(){const maintenancesPlanifiees=loadMaintenances().filter(m=>m.statut==="À faire"||!m.statut);if(maintenancesPlanifiees.length===0){alert("Aucune maintenance planifiée à exporter.");return;}const headers=["Machine","Type Maintenance","Date Planifiée (AAAA-MM-JJ)","Prochaine Echeance (AAAA-MM-JJ)","Statut"];const dataToExport=maintenancesPlanifiees.map(m=>[m.machine,m.typeMaintenance,m.dateMaintenance,m.prochaineEcheance||'',m.statut||"À faire"]);downloadCSV("export_maintenances_planifiees.csv",[headers,...dataToExport]);}
+    function initMaintenanceEventListeners(){if(initMaintenanceEventListeners.initialized)return;document.getElementById('maintenanceForm').addEventListener('submit',function(e){e.preventDefault();if(!isAdminMode){alert("Mode Administrateur requis.");return;}const{machine_maintenance,typeMaintenance,dateMaintenance,prochaineEcheance,statutMaintenance}=this.elements; // Correction ID machine_maintenance
+        if(statutMaintenance.value==="À faire"){if(!dateMaintenance.value){alert("La date planifiée est requise pour une maintenance 'À faire'.");return;}if(!prochaineEcheance.value){alert("La prochaine échéance est requise pour une maintenance 'À faire'.");return;}if(new Date(dateMaintenance.value)>new Date(prochaineEcheance.value)){alert("La date planifiée ne peut pas être après la prochaine échéance.");return;}}if(statutMaintenance.value==="Fait"&&!dateMaintenance.value){alert("La date de réalisation est requise pour archiver une maintenance comme 'Faite'.");return;}
+        if(statutMaintenance.value==="Fait"){const pannes=loadPannes();pannes.push({machine:machine_maintenance.value,datePanne:dateMaintenance.value,descriptionPanne:"Maintenance Faite (archivée): "+typeMaintenance.value,dateResolution:dateMaintenance.value});savePannes(pannes);if(document.getElementById('pannes').classList.contains('active'))afficherPannes();alert("Maintenance enregistrée et archivée dans la section Pannes.");updatePannesSummary();
+        }else{const maintenances=loadMaintenances();maintenances.push({machine:machine_maintenance.value,typeMaintenance:typeMaintenance.value,dateMaintenance:dateMaintenance.value,prochaineEcheance:prochaineEcheance.value,statut:"À faire"});saveMaintenances(maintenances);afficherMaintenances();}this.reset();});
+        document.getElementById('viderMaintenance').addEventListener('click',viderToutesLesMaintenances);document.getElementById('printMaintenancesBtn').addEventListener('click',printMaintenancesPDF);document.getElementById('exportMaintenancesCsvBtn').addEventListener('click',exportMaintenancesCSV);initMaintenanceEventListeners.initialized=true;
+    }
+    // --- FIN Gestion Maintenance ---
+
+    // --- Gestion Pannes (Archives) ---
+    function savePannes(pannes){localStorage.setItem('atelierEvolutis_pannesMachines',JSON.stringify(pannes));}
+    function loadPannes(){return JSON.parse(localStorage.getItem('atelierEvolutis_pannesMachines')||'[]');}
+    function updatePannesSummary(){const pannes=loadPannes();document.getElementById('pannesSummary').innerHTML=`<i class="fas fa-info-circle"></i> ${pannes.length} panne(s) et maintenance(s) faite(s) archivée(s).`;}
+    function afficherPannes(){const tableBody=document.getElementById('tablePannes').querySelector('tbody');tableBody.innerHTML='';const pannes=loadPannes();pannes.sort((a,b)=>new Date(b.datePanne)-new Date(a.datePanne));if(pannes.length===0){const ligne=tableBody.insertRow();const cell=ligne.insertCell();cell.colSpan=5;cell.textContent="Aucune panne ou maintenance faite n'est archivée.";cell.style.textAlign="center";cell.style.fontStyle="italic";}else{pannes.forEach(p=>{const ligne=tableBody.insertRow();ligne.insertCell().textContent=p.machine;ligne.insertCell().textContent=formatDate(p.datePanne);ligne.insertCell().textContent=p.descriptionPanne;ligne.insertCell().textContent=formatDate(p.dateResolution);const actionCell=ligne.insertCell();actionCell.classList.add('admin-only-cell');const deleteBtn=document.createElement('button');deleteBtn.className='supprimer-btn';deleteBtn.innerHTML='<i class="fas fa-trash"></i>';deleteBtn.title="Supprimer cette archive";deleteBtn.style.display=isAdminMode?'inline-block':'none';deleteBtn.onclick=()=>supprimerPanneByDetails(p.machine,p.datePanne,p.descriptionPanne,p.dateResolution);actionCell.appendChild(deleteBtn);});}document.querySelectorAll('#tablePannes th.admin-only-header').forEach(th=>th.style.display=isAdminMode?'':'none');updatePannesSummary();applyPannesAccessControls();}
+    function supprimerPanneByDetails(machine,datePanne,descriptionPanne,dateResolution){if(!isAdminMode){alert("Mode Administrateur requis.");return;}if(!confirm(`Supprimer l'archive: "${descriptionPanne}" pour la machine ${machine}, intervenue le ${formatDate(datePanne)} et résolue le ${formatDate(dateResolution)}?`))return;let pannes=loadPannes();const panneIdentifier=`${machine}-${datePanne}-${descriptionPanne}-${dateResolution}`;pannes=pannes.filter(p=>`${p.machine}-${p.datePanne}-${p.descriptionPanne}-${p.dateResolution}`!==panneIdentifier);savePannes(pannes);afficherPannes();}
+    function viderToutesLesPannes(){if(!isAdminMode){alert("Mode Administrateur requis.");return;}if(confirm("Voulez-vous vraiment vider toutes les archives de pannes et maintenances faites?"))savePannes([]),afficherPannes();}
+    function printPannesPDF(){const{jsPDF}=window.jspdf;const doc=new jsPDF();doc.text('Archives des Pannes et Maintenances Faites',10,15);const pannes=loadPannes();if(pannes.length===0)doc.text("Aucune archive à afficher.",10,25);else{const tableRows=pannes.map(p=>[p.machine,formatDate(p.datePanne),p.descriptionPanne,formatDate(p.dateResolution)]);doc.autoTable({head:[['Machine','Date Panne/Intervention','Description','Date Résolution/Réalisation']],body:tableRows,startY:25,headStyles:{fillColor:getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),textColor:getComputedStyle(document.documentElement).getPropertyValue('--text-light-color').trim()},alternateRowStyles:{fillColor:'#f5f5f5'}});}doc.save('archives_pannes_maintenances.pdf');}
+    function exportPannesCSV(){const pannes=loadPannes();if(pannes.length===0){alert("Aucune archive à exporter.");return;}const headers=["Machine","Date Panne/Intervention (AAAA-MM-JJ)","Description","Date Résolution/Réalisation (AAAA-MM-JJ)"];const dataToExport=pannes.map(p=>[p.machine,p.datePanne,p.descriptionPanne,p.dateResolution]);downloadCSV("export_archives_pannes_maintenances.csv",[headers,...dataToExport]);}
+    function initPannesEventListeners(){if(initPannesEventListeners.initialized)return;document.getElementById('panneForm').addEventListener('submit',function(e){e.preventDefault();if(!isAdminMode){alert("Mode Administrateur requis.");return;}const{machinePanne,datePanne,descriptionPanne,dateResolution}=this.elements;if(new Date(datePanne.value)>new Date(dateResolution.value)){alert("La date de panne/intervention ne peut pas être après la date de résolution/réalisation.");return;}const pannes=loadPannes();pannes.push({machine:machinePanne.value,datePanne:datePanne.value,descriptionPanne:descriptionPanne.value,dateResolution:dateResolution.value});savePannes(pannes);afficherPannes();this.reset();});document.getElementById('viderPannes').addEventListener('click',viderToutesLesPannes);document.getElementById('printPannesBtn').addEventListener('click',printPannesPDF);document.getElementById('exportPannesCsvBtn').addEventListener('click',exportPannesCSV);initPannesEventListeners.initialized=true;}
+    // --- FIN Gestion Pannes ---
+
+    // --- DEBUT : Gestion des Ordres de Fabrication (OFs) ---
+    const DB_KEY_OFS = 'atelierEvolutis_OFsData';
+    let ofsData = []; // Contiendra les objets OFs
+    let ofEditMode = false;
+
+    function loadOFs() {
+        const data = localStorage.getItem(DB_KEY_OFS);
+        ofsData = data ? JSON.parse(data) : [];
+        return ofsData;
+    }
+
+    function saveOFs() {
+        localStorage.setItem(DB_KEY_OFS, JSON.stringify(ofsData));
+    }
+
+    function updateOFsSummary() {
+        const summaryEl = document.getElementById('ofsSummary');
+        if (summaryEl) {
+            const enCours = ofsData.filter(of => of.status !== 'Terminé').length;
+            summaryEl.innerHTML = `<i class="fas fa-info-circle"></i> ${ofsData.length} OF(s) enregistré(s), dont ${enCours} non terminé(s).`;
+        }
+    }
+
+    function renderOFsTable() {
+        const tableBody = document.getElementById('ofsTableBody');
+        if (!tableBody) return;
+        tableBody.innerHTML = '';
+
+        const ofsToDisplay = [...ofsData].sort((a, b) => {
+            if (a.status === 'Terminé' && b.status !== 'Terminé') return 1;
+            if (a.status !== 'Terminé' && b.status === 'Terminé') return -1;
+            return parseInt(b.id) - parseInt(a.id); // Plus récent en premier pour les non-terminés
+        });
+
+
+        if (ofsToDisplay.length === 0) {
+            const tr = tableBody.insertRow();
+            const td = tr.insertCell();
+            td.colSpan = 9; // Ajuster le colSpan au nombre de colonnes
+            td.textContent = "Aucun ordre de fabrication enregistré.";
+            td.style.textAlign = "center";
+            td.style.fontStyle = "italic";
+            return;
+        }
+
+        ofsToDisplay.forEach(of => {
+            const tr = tableBody.insertRow();
+            const progress = of.quantity > 0 ? Math.round((of.produced / of.quantity) * 100) : 0;
+            let statusColorVar = '--success-color'; // Vert par défaut
+            if (of.status === 'Terminé') statusColorVar = '--blue-color';
+            else if (progress < 50) statusColorVar = '--danger-color';
+            else if (progress < 90) statusColorVar = '--warning-color';
+
+
+            tr.insertCell().innerHTML = `<span style="color:var(${statusColorVar}); font-weight:bold;">${of.status}</span>`;
+            tr.insertCell().textContent = of.orderNumber;
+            tr.insertCell().textContent = of.machine;
+            tr.insertCell().textContent = of.product;
+            tr.insertCell().textContent = of.quantity;
+
+            const producedCell = tr.insertCell();
+            producedCell.className = `produced-cell ${ofEditMode && isAdminMode && of.status !== 'Terminé' ? 'editable' : ''}`;
+            if (ofEditMode && isAdminMode && of.status !== 'Terminé') {
+                producedCell.innerHTML = `<input type="number" value="${of.produced}" min="0" max="${of.quantity}" data-of-id="${of.id}" style="width:70px; text-align:center;">`;
+            } else {
+                producedCell.textContent = of.produced;
+            }
+
+            tr.insertCell().innerHTML = `<span style="color:var(${statusColorVar}); font-weight:bold;">${progress}%</span>`;
+
+            const editCell = tr.insertCell();
+            editCell.classList.add('admin-only-cell'); // Classe pour gérer affichage via CSS si admin-only pas suffisant
+            editCell.style.textAlign = 'center';
+            if (ofEditMode && isAdminMode && of.status !== 'Terminé') {
+                const saveBtn = document.createElement('button');
+                saveBtn.innerHTML = '<i class="fas fa-save"></i>';
+                saveBtn.title = 'Sauvegarder Qté';
+                saveBtn.style.fontSize="0.8em"; saveBtn.style.padding="4px 8px"; saveBtn.style.backgroundColor="var(--success-color)"; saveBtn.style.color="var(--text-light-color)"; saveBtn.style.border="none"; saveBtn.style.borderRadius="var(--border-radius-sm)";
+                saveBtn.onclick = () => saveOFProduction(of.id);
+                editCell.appendChild(saveBtn);
+            } else {
+                 editCell.innerHTML = (of.status === 'Terminé') ? '<i class="fas fa-check-circle" style="color:var(--success-color); font-size:1.2em;"></i>' : '-';
+            }
+
+
+            const actionCell = tr.insertCell();
+            actionCell.classList.add('admin-only-cell');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'supprimer-btn'; // Style existant pour les boutons supprimer
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            deleteBtn.title = "Supprimer l'OF";
+            // La visibilité du bouton est gérée par applyOFsAccessControls via la classe .admin-only sur le header et les appels à .style.display
+            deleteBtn.onclick = () => deleteOF(of.id);
+            actionCell.appendChild(deleteBtn);
+        });
+        applyOFsAccessControls(); // S'assurer que les contrôles sont bien appliqués
+    }
+
+    function toggleOFEditMode() {
+        if (!isAdminMode) {
+            alert("Mode Administrateur requis pour modifier les quantités.");
+            return;
+        }
+        ofEditMode = !ofEditMode;
+        const btn = document.getElementById('toggleOFEditModeBtn');
+        if (btn) {
+            btn.innerHTML = ofEditMode ? '<i class="fas fa-eye"></i> Mode Vue' : '<i class="fas fa-edit"></i> Modifier Qté';
+            if(ofEditMode) {
+                btn.classList.add('admin-active'); // Style pour indiquer mode actif
+                btn.style.backgroundColor = "var(--success-color)";
+            } else {
+                btn.classList.remove('admin-active');
+                btn.style.backgroundColor = "var(--secondary-color)";
+            }
+        }
+        renderOFsTable();
+    }
+
+    function saveOFProduction(ofId) {
+        if (!isAdminMode) { alert("Mode Administrateur requis."); return; }
+        const inputElement = document.querySelector(`input[data-of-id="${ofId}"]`);
+        if (!inputElement) return;
+
+        const newProduced = parseInt(inputElement.value, 10);
+        const ofIndex = ofsData.findIndex(o => o.id === ofId);
+
+        if (ofIndex === -1) { console.error("OF non trouvé pour sauvegarde:", ofId); return;}
+
+        const of = ofsData[ofIndex];
+
+        if (isNaN(newProduced) || newProduced < 0) {
+            alert("Quantité produite invalide. Veuillez entrer un nombre positif.");
+            inputElement.value = of.produced;
+            return;
+        }
+        if (newProduced > of.quantity) {
+            alert("La quantité produite ne peut pas dépasser la quantité prévue.");
+            inputElement.value = of.produced;
+            return;
+        }
+
+        ofsData[ofIndex].produced = newProduced;
+        if (newProduced >= of.quantity) {
+            ofsData[ofIndex].status = 'Terminé';
+        } else if (newProduced > 0) {
+            ofsData[ofIndex].status = 'En cours';
+        } else {
+            ofsData[ofIndex].status = 'Planifié';
+        }
+
+        saveOFs();
+        // Optionnel : sortir du mode édition après chaque sauvegarde
+        // ofEditMode = false;
+        // const toggleBtn = document.getElementById('toggleOFEditModeBtn');
+        // if (toggleBtn) {
+        //     toggleBtn.innerHTML = '<i class="fas fa-edit"></i> Modifier Qté';
+        //     toggleBtn.classList.remove('admin-active');
+        //     toggleBtn.style.backgroundColor = "var(--secondary-color)";
+        // }
+        renderOFsTable();
+        updateOFsSummary();
+    }
+
+    function deleteOF(ofId) {
+        if (!isAdminMode) { alert("Mode Administrateur requis."); return; }
+        if (confirm("Êtes-vous sûr de vouloir supprimer cet Ordre de Fabrication ?")) {
+            ofsData = ofsData.filter(of => of.id !== ofId);
+            saveOFs();
+            renderOFsTable();
+            updateOFsSummary();
+        }
+    }
+
+    function viderTousOFs() {
+        if (!isAdminMode) { alert("Mode Administrateur requis."); return; }
+        if (confirm("Êtes-vous sûr de vouloir supprimer TOUS les Ordres de Fabrication ? Cette action est irréversible.")) {
+            ofsData = [];
+            saveOFs();
+            renderOFsTable();
+            updateOFsSummary();
+        }
+    }
+
+    function applyOFsAccessControls() {
+        document.querySelectorAll('#ofsTable .supprimer-btn').forEach(btn => btn.style.display = isAdminMode ? 'inline-block' : 'none');
+        document.querySelectorAll('#ofsTable th.admin-only-header, #ofsTable td.admin-only-cell').forEach(cell => cell.style.display = isAdminMode ? '' : 'none');
+        document.querySelectorAll('#ofsForm button[type="submit"].admin-only').forEach(btn => btn.style.display = isAdminMode ? 'inline-flex' : 'none');
+        document.querySelectorAll('#viderTousOFs.admin-only').forEach(btn => btn.style.display = isAdminMode ? 'inline-flex' : 'none');
+        document.querySelectorAll('#ofsTable input[type="number"]').forEach(input => input.disabled = !isAdminMode);
+
+        const toggleBtn = document.getElementById('toggleOFEditModeBtn');
+        if (toggleBtn) {
+            toggleBtn.style.display = isAdminMode ? 'inline-flex' : 'none';
+            if (!isAdminMode && ofEditMode) { // Si on sort du mode admin alors qu'on était en mode edit OF
+                ofEditMode = false;
+                toggleBtn.innerHTML = '<i class="fas fa-edit"></i> Modifier Qté';
+                toggleBtn.classList.remove('admin-active');
+                toggleBtn.style.backgroundColor = "var(--secondary-color)";
+                renderOFsTable(); // Re-render pour cacher les inputs
+            }
+        }
+    }
+
+
+    function initOFsSection() {
+        const form = document.getElementById('ofForm');
+        if (form && !form.hasAttribute('data-listener-attached-of')) {
+            form.addEventListener('submit', function(event) {
+                event.preventDefault();
+                if (!isAdminMode) {
+                    alert("Mode Administrateur requis pour ajouter un OF.");
+                    return;
+                }
+                const newOF = {
+                    id: Date.now().toString(),
+                    orderNumber: this.elements.ofOrderNumber.value,
+                    machine: this.elements.ofMachine.value,
+                    product: this.elements.ofProduct.value,
+                    quantity: parseInt(this.elements.ofQuantity.value, 10),
+                    produced: 0,
+                    status: 'Planifié'
+                };
+                if(isNaN(newOF.quantity) || newOF.quantity <=0) {
+                    alert("La quantité prévue doit être un nombre positif.");
+                    return;
+                }
+                ofsData.push(newOF);
+                saveOFs();
+                renderOFsTable();
+                updateOFsSummary();
+                this.reset();
+            });
+            form.setAttribute('data-listener-attached-of', 'true');
+        }
+
+        const viderBtn = document.getElementById('viderTousOFs');
+        if (viderBtn && !viderBtn.hasAttribute('data-listener-attached-ofvider')) {
+            viderBtn.addEventListener('click', viderTousOFs);
+            viderBtn.setAttribute('data-listener-attached-ofvider', 'true');
+        }
+
+        loadOFs();
+        renderOFsTable();
+        updateOFsSummary();
+        applyOFsAccessControls();
+    }
+    // --- FIN : Gestion des Ordres de Fabrication (OFs) ---
+
+
+    // --- Fonctions Globales (PDF, Export/Import Données) ---
+    async function printCombinedWeeklyReportPDF(){
+        const{jsPDF}=window.jspdf;const doc=new jsPDF('p','pt'); // 'pt' pour points, plus standard pour PDF
+        const pageHeight=doc.internal.pageSize.getHeight();const pageWidth=doc.internal.pageSize.getWidth();const margin=40;let currentY=margin;
+        const todayDate=new Date();const reportYear=todayDate.getFullYear();const reportWeekNum=getISOWeek(todayDate);
+
+        doc.setFontSize(20);doc.text(`Rapport Hebdomadaire - Semaine ${reportWeekNum} (${reportYear})`,pageWidth/2,currentY,{align:'center'});currentY+=40;
+        function checkAndAddPage(neededSpace){if(currentY+neededSpace>pageHeight-margin){doc.addPage();currentY=margin;return true;}return false;}
+
+        const weekStartDate=getStartOfWeek(reportYear,reportWeekNum);weekStartDate.setHours(0,0,0,0);
+        const weekEndDate=getEndOfWeek(reportYear,reportWeekNum);weekEndDate.setHours(23,59,59,999);
+
+        checkAndAddPage(80); // Espace pour titre + tableau
+        doc.setFontSize(16);doc.text('Congés de la Semaine',margin,currentY);currentY+=25;
+        const allCongesData=loadConges();
+        const congesSemaineCourante=allCongesData.filter(c=>{const congeStart=new Date(c.dateDebut);congeStart.setHours(0,0,0,0);const congeEnd=new Date(c.dateFin);congeEnd.setHours(23,59,59,999);return congeStart<=weekEndDate&&congeEnd>=weekStartDate;});
+        if(congesSemaineCourante.length===0){doc.setFontSize(10);doc.text("Aucun congé enregistré pour cette semaine.",margin,currentY);currentY+=30;}else{const congesTableRows=congesSemaineCourante.map(c=>{let joursOuvresDansSemaine=0;if(c.typeConge==="Congé"){let currentEffectiveDate=new Date(Math.max(new Date(c.dateDebut),weekStartDate));let effectiveEndDate=new Date(Math.min(new Date(c.dateFin),weekEndDate));while(currentEffectiveDate<=effectiveEndDate){const dayW=currentEffectiveDate.getDay();if(dayW!==0&&dayW!==6&&!isHoliday(currentEffectiveDate))joursOuvresDansSemaine++;currentEffectiveDate.setDate(currentEffectiveDate.getDate()+1);}}return[c.collaborateur,c.typeConge,formatDate(c.dateDebut),formatDate(c.dateFin),(c.typeConge==="Congé")?joursOuvresDansSemaine:'-'];});
+        doc.autoTable({head:[['Collaborateur','Type','Début Congé','Fin Congé','Jrs Ouvrés (Semaine)']],body:congesTableRows,startY:currentY,margin:{left:margin,right:margin},headStyles:{fillColor:getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),textColor:getComputedStyle(document.documentElement).getPropertyValue('--text-light-color').trim(),fontSize:10,cellPadding:3},bodyStyles:{fontSize:9,cellPadding:3},didDrawPage:data=>{currentY=data.cursor.y;if(data.pageNumber>doc.internal.getNumberOfPages())currentY=margin;}});currentY=doc.lastAutoTable.finalY+30;}
+
+        checkAndAddPage(100); // Espace pour titre + tableau production
+        doc.setFontSize(16);doc.text('Production de la Semaine',margin,currentY);currentY+=25;
+        let productionDataForPDF=JSON.parse(localStorage.getItem(getProductionDataKey_prod(reportYear,reportWeekNum)))||null;
+        let objectivesForPDF=JSON.parse(JSON.stringify(DEFAULT_PRODUCT_DEFINITIONS_PROD));
+        const savedObjectivesPDF=JSON.parse(localStorage.getItem(getObjectivesDataKey_prod(reportYear,reportWeekNum)));
+        if(savedObjectivesPDF){for(const r in objectivesForPDF){if(savedObjectivesPDF[r]){objectivesForPDF[r].objectifJour=savedObjectivesPDF[r].objectifJour??DEFAULT_PRODUCT_DEFINITIONS_PROD[r].objectifJour;objectivesForPDF[r].objectifSemaine=savedObjectivesPDF[r].objectifSemaine??DEFAULT_PRODUCT_DEFINITIONS_PROD[r].objectifSemaine;}}}
+        if(!productionDataForPDF){productionDataForPDF={};for(const r in objectivesForPDF)productionDataForPDF[r]=Array(7).fill(0);}
+        const prodStartDatePDF=getStartOfWeekSunday(reportYear,reportWeekNum);const dayFmtPDF=new Intl.DateTimeFormat('fr-FR',{weekday:'short'});const dateFmtPDF=new Intl.DateTimeFormat('fr-FR',{day:'2-digit',month:'2-digit'});const prodDayHeadersPDF=[];
+        for(let i=0;i<7;i++){const currentD=new Date(prodStartDatePDF);currentD.setDate(prodStartDatePDF.getDate()+i);let dLbl=dayFmtPDF.format(currentD).toUpperCase().replace('.','');let dateLbl=dateFmtPDF.format(currentD);const holName=isHoliday(currentD);let hdrContent=`${dLbl}\n${dateLbl}`;if(holName)hdrContent+=`\n(${holName.substring(0,10)+(holName.length>10?'...':'')})`;prodDayHeadersPDF.push(hdrContent);}
+        const prodTableBodyPDF=Object.keys(objectivesForPDF).map(r=>{const dailyData=productionDataForPDF[r]||Array(7).fill(0);const total=dailyData.reduce((a,b)=>a+b,0);return[r,...dailyData,total,objectivesForPDF[r].objectifSemaine];});
+        doc.autoTable({head:[['Référence',...prodDayHeadersPDF,'Total Sem.','Objectif Sem.']],body:prodTableBodyPDF,startY:currentY,margin:{left:margin,right:margin},headStyles:{fillColor:getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),textColor:getComputedStyle(document.documentElement).getPropertyValue('--text-light-color').trim(),fontSize:8,cellPadding:2,halign:'center'},bodyStyles:{fontSize:8,cellPadding:2,halign:'center'},columnStyles:{0:{halign:'left',cellWidth:'auto'}},didDrawPage:data=>{currentY=data.cursor.y;if(data.pageNumber>doc.internal.getNumberOfPages())currentY=margin;}});currentY=doc.lastAutoTable.finalY+20;
+
+        const chartNeededSpace=250;checkAndAddPage(chartNeededSpace+20); // Espace pour graphique
+        const tempChartCanvasId='tempPdfChartCanvas';let tempChartCanvas=document.getElementById(tempChartCanvasId);if(tempChartCanvas)tempChartCanvas.parentNode.removeChild(tempChartCanvas);
+        tempChartCanvas=document.createElement('canvas');tempChartCanvas.id=tempChartCanvasId;tempChartCanvas.width=800;tempChartCanvas.height=400;tempChartCanvas.style.position='absolute';tempChartCanvas.style.left='-9999px';tempChartCanvas.style.top='-9999px';document.body.appendChild(tempChartCanvas);
+        let tempChartInstance=null;
+        try{const labelsPDF=Object.keys(objectivesForPDF);const producedDataPDF=labelsPDF.map(r=>(productionDataForPDF[r]||[]).reduce((a,b)=>a+b,0));const objectivesDataPDF=labelsPDF.map(r=>objectivesForPDF[r]?objectivesForPDF[r].objectifSemaine:0);
+        tempChartInstance=new Chart(tempChartCanvas.getContext('2d'),{type:'bar',data:{labels:labelsPDF,datasets:[{label:'Produit',data:producedDataPDF,backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),borderRadius:4},{label:'Objectif Semaine',data:objectivesDataPDF,backgroundColor:getComputedStyle(document.documentElement).getPropertyValue('--secondary-color').trim(),borderRadius:4}]},options:{responsive:false,animation:{duration:0},scales:{y:{beginAtZero:true}},plugins:{customCanvasBackgroundColor:{color:'white'}}},plugins:[{id:'customCanvasBackgroundColor',beforeDraw:(chart,args,options)=>{const{ctx}=chart;ctx.save();ctx.globalCompositeOperation='destination-over';ctx.fillStyle=options.color||'#FFFFFF';ctx.fillRect(0,0,chart.width,chart.height);ctx.restore();}}]});
+        await new Promise(resolve=>setTimeout(resolve,300)); // Laisse le temps au graphique de se rendre
+        if(tempChartCanvas.width>0&&tempChartCanvas.height>0){const imgData=tempChartCanvas.toDataURL('image/png',1.0);const chartWidth=tempChartCanvas.width;const chartHeight=tempChartCanvas.height;const pdfImageWidth=pageWidth-(2*margin);const pdfImageHeight=(chartHeight*pdfImageWidth)/chartWidth;
+        if(pdfImageHeight>0&&pdfImageWidth>0&&imgData&&imgData!=='data:,'){doc.addImage(imgData,'PNG',margin,currentY,pdfImageWidth,pdfImageHeight);currentY+=pdfImageHeight+30;}else{throw new Error("Dimensions/données image graphique invalides.");}}else{throw new Error("Canvas temporaire du graphique a des dimensions nulles.");}}catch(e){console.error("Erreur lors de la génération du graphique pour PDF de production:",e);doc.setFontSize(9);doc.setTextColor(255,0,0);doc.text(`Erreur graphique: ${e.message}`,margin,currentY,{maxWidth:pageWidth-(2*margin)});doc.setTextColor(0,0,0);currentY+=30;}finally{if(tempChartInstance)tempChartInstance.destroy();if(tempChartCanvas&&tempChartCanvas.parentNode)tempChartCanvas.parentNode.removeChild(tempChartCanvas);}
+
+        checkAndAddPage(80); // Espace pour titre + tableau maintenances
+        doc.setFontSize(16);doc.text('Maintenances Planifiées de la Semaine',margin,currentY);currentY+=25;
+        const allMaintenances=loadMaintenances().filter(maint=>maint.statut==="À faire"||!maint.statut);
+        const maintenancesSemaineCourante=allMaintenances.filter(maint=>{const dateMaint=new Date(maint.dateMaintenance);dateMaint.setHours(0,0,0,0);const dateEch=maint.prochaineEcheance?new Date(maint.prochaineEcheance):null;if(dateEch)dateEch.setHours(0,0,0,0);const maintDansSemaine=dateMaint>=weekStartDate&&dateMaint<=weekEndDate;const echeanceDansSemaine=dateEch?(dateEch>=weekStartDate&&dateEch<=weekEndDate):false;return maintDansSemaine||echeanceDansSemaine;});
+        if(maintenancesSemaineCourante.length===0){doc.setFontSize(10);doc.text("Aucune maintenance planifiée pour cette semaine.",margin,currentY);currentY+=30;}else{const maintTableRows=maintenancesSemaineCourante.map(maint=>[maint.machine,maint.typeMaintenance,formatDate(maint.dateMaintenance),formatDate(maint.prochaineEcheance)]);
+        doc.autoTable({head:[['Machine','Type','Date Planifiée','Prochaine Échéance']],body:maintTableRows,startY:currentY,margin:{left:margin,right:margin},headStyles:{fillColor:getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim(),textColor:getComputedStyle(document.documentElement).getPropertyValue('--text-light-color').trim(),fontSize:10,cellPadding:3},bodyStyles:{fontSize:9,cellPadding:3},didDrawPage:data=>{currentY=data.cursor.y;if(data.pageNumber>doc.internal.getNumberOfPages())currentY=margin;}});currentY=doc.lastAutoTable.finalY+30;}
+
+        doc.save(`rapport_hebdomadaire_S${reportWeekNum}_${reportYear}.pdf`);
+    }
+
+    // Clés localStorage à exporter/importer
+    const APP_DATA_KEYS=['atelierEvolutis_joursAcquisCollaborateurs','atelierEvolutis_congesCollaborateurs','atelierEvolutis_maintenancesMachines','atelierEvolutis_pannesMachines', DB_KEY_OFS /* Ajouté pour les OFs */];
+    function exportAllApplicationData(){
+        if(!confirm("Ceci va créer une sauvegarde locale de toutes les données de l'application. Voulez-vous continuer ?"))return;
+        const allData={};
+        // Données principales gérées par APP_DATA_KEYS
+        APP_DATA_KEYS.forEach(key=>{const dataItem=localStorage.getItem(key);if(dataItem!==null) try{allData[key]=JSON.parse(dataItem);}catch(e){allData[key]=dataItem; /* Cas où ce n'est pas du JSON valide, peu probable ici */}});
+        // Données spécifiques (production, objectifs) qui ont des clés dynamiques
+        for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(key.startsWith('atelierEvolutis_prodData_')||key.startsWith('atelierEvolutis_objectivesData_')){const dataItem=localStorage.getItem(key); if(dataItem!==null) try{allData[key]=JSON.parse(dataItem);}catch(e){allData[key]=dataItem;}}}
+        const currentDateStr=new Date().toISOString().slice(0,10); // Format AAAA-MM-JJ
+        const jsonData=JSON.stringify(allData,null,2); // null,2 pour un formatage lisible
+        const blob=new Blob([jsonData],{type:'application/json'});
+        const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download=`sauvegarde_atelier_evolutis_complet_${currentDateStr}.json`;document.body.appendChild(link);link.click();document.body.removeChild(link);URL.revokeObjectURL(link.href);
+        alert("Données exportées avec succès. Conservez le fichier téléchargé précieusement.");
+    }
+    function handleImportFileSelection(event){
+        const file=event.target.files[0];if(!file)return;
+        if(!confirm("ATTENTION: L'importation va remplacer TOUTES les données actuelles de l'application par celles du fichier sélectionné. Cette action est irréversible. Voulez-vous continuer ?")){event.target.value=null;return;}
+        const reader=new FileReader();
+        reader.onload=function(evt){
+            try{
+                const importedData=JSON.parse(evt.target.result);
+                localStorage.clear(); // Efface TOUT le localStorage actuel
+                for(const key in importedData){if(importedData.hasOwnProperty(key)){localStorage.setItem(key,JSON.stringify(importedData[key]));}} // Réécrit avec les données importées
+                joursAcquisGlobalData={};loadJoursAcquis(true); // Force le rechargement des jours acquis
+                currentProductionWeekNum=getISOWeek(new Date());currentProductionYear=new Date().getFullYear(); // Réinitialise la semaine de prod
+                alert("Données importées avec succès ! L'application va maintenant se rafraîchir avec les nouvelles données.");
+                const currentActiveSectionId=document.querySelector('.section.active')?.id||'conge'; // Trouver la section active ou défaut 'conge'
+                showSection(currentActiveSectionId,true); // Rafraîchir la section active et les contrôles admin
+                checkAdminStatusFromSession(); // Assurer que le mode admin est correct
+            }catch(err){console.error("Erreur lors de l'importation du fichier JSON:",err);alert("Erreur lors de l'importation: "+err.message+"\nLe fichier est peut-être corrompu ou n'est pas au format attendu. Le localStorage a été vidé par précaution. Veuillez recharger l'application ou tenter une nouvelle importation avec un fichier valide.");localStorage.clear();joursAcquisGlobalData={};loadJoursAcquis(true);showSection('conge',true); /* Réinitialise à un état de base */}
+            finally{event.target.value=null; /* Permet de resélectionner le même fichier */}
+        };
+        reader.onerror=function(ex){console.error("Erreur de lecture du fichier:",ex);alert("Impossible de lire le fichier sélectionné.");event.target.value=null;};
+        reader.readAsText(file);
+    }
+    // --- FIN Fonctions Globales ---
+
+
+    // --- Initialisation au chargement de la page ---
+    window.addEventListener('load', () => {
+      checkAdminStatusFromSession(); // Vérifier si le mode admin était actif dans la session
+      loadJoursAcquis(true); // Charger les jours acquis au démarrage (forceReload=true pour initialiser si besoin)
+      const defaultSection = 'conge'; // Section à afficher par défaut
+      showSection(defaultSection, true); // Afficher la section et forcer le rafraîchissement des contrôles admin
+    });
+  </script>
+</body>
+</html>
+```
